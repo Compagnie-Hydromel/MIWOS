@@ -1,0 +1,2 @@
+pluralizer==1.2.0
+mysql-connector-python==9.3.0

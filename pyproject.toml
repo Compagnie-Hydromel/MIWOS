@@ -1,0 +1,22 @@
+[build-system]
+requires = [
+    "setuptools>=62.6,<=78.1.0",
+    "setuptools-scm>=6.2,<=8.2.1",
+]
+
+[project]
+name = "MIWOS"
+version = "0.0.1"
+authors = [
+    { name = "Ethann Schneider" },
+]
+description = "This is an ORM (Object Relational Mapping) library for Python"
+requires-python = ">=3.13"
+
+[tool.setuptools]
+packages = [
+    "MIWOS"
+]
+
+[tool.setuptools.dynamic]
+dependencies = {file = "requirements.txt"}
