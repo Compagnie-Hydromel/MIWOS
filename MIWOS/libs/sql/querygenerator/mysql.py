@@ -27,6 +27,11 @@ class MySQLQueryGenerator:
         self.base_query = f"INSERT INTO {self.table_name} ({columns}) VALUES ({values})" if kwargs else ""
         self.returning = f"RETURNING *" if kwargs else ""
 
+    def update(self, **kwargs):
+        set_clause = ", ".join(
+            f"{key}='{value}'" for key, value in kwargs.items())
+        self.base_query = f"UPDATE {self.table_name} SET {set_clause}" if kwargs else ""
+
     def select(self, *args):
         columns = ", ".join(args) if args else "*"
         self.base_query = f"SELECT {columns} FROM {self.table_name}"

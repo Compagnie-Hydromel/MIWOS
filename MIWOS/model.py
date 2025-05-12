@@ -4,44 +4,51 @@ from MIWOS.libs.sql.select import database_select
 
 
 class Model:
+    _primary_key = "id"
+
     def __init__(self, **kwargs):
-        self.query = (database_select())(self.table_name)
-        self.modified_attributes = kwargs
-        self.attributes = {}
-        self.locked = False
+        self._query = (database_select())(self.table_name)
+        self._modified_attributes = kwargs
+        self._attributes = {}
+        self._locked = False
+        self._need_creation = True
 
     @classmethod
     def find(cls, id):
         model = cls()
-        model.query.select("*")
-        model.query.where(id=id)
-        model.query.limit(1)
-        result = model.query.execute()
+        model._query.select("*")
+        model._query.where(
+            **{cls._primary_key: id})
+        model._query.limit(1)
+        result = model._query.execute()
         if not result:
             return None
-        model.attributes = result
+        model._attributes = result
+        model._need_creation = False
         return model
 
     @classmethod
     def where(cls, **kwargs):
         models = []
-        query = (database_select())(cls().table_name)
-        query.select("*")
-        query.where(**kwargs)
-        for data in query.execute():
+        _query = (database_select())(cls().table_name)
+        _query.select("*")
+        _query.where(**kwargs)
+        for data in _query.execute():
             model = cls()
-            model.attributes = data
+            model._attributes = data
+            model._need_creation = False
             models.append(model)
         return models
 
     @classmethod
     def all(cls):
         models = []
-        query = (database_select())(cls().table_name)
-        query.select("*")
-        for data in query.execute():
+        _query = (database_select())(cls().table_name)
+        _query.select("*")
+        for data in _query.execute():
             model = cls()
-            model.attributes = data
+            model._attributes = data
+            model._need_creation = False
             models.append(model)
         return models
 
@@ -58,25 +65,41 @@ class Model:
         return self._table_name
 
     def save(self):
-        if self.locked:
-            raise LockedModelException("Model is locked. Cannot save.")
-        self.query.insert(**self.modified_attributes)
-        self.attributes = self.query.commit()
-        self.modified_attributes = {}
+        if self._locked:
+            raise LockedModelException(
+                self.table_name + " is _locked. Cannot save.")
+        if self._need_creation:
+            self._query.insert(**self._modified_attributes)
+            self._attributes = self._query.commit()
+        else:
+            self._query.update(**self._modified_attributes)
+            self._query.where(
+                **{self._primary_key: self._attributes[self._primary_key]})
+            self._query.commit()
+            self._attributes.update(self._modified_attributes)
+        self._modified_attributes = {}
+        self._need_creation = False
 
     def delete(self):
-        self.query.delete()
-        self.query.where(id=self.attributes["id"])
-        self.query.commit()
-        self.locked = True
+        self._query.delete()
+        self._query.where(
+            **{self._primary_key: self._attributes[self._primary_key]})
+        self._query.commit()
+        self._locked = True
 
-    def __getattribute__(self, name):
+    def __getattr__(self, name):
         try:
             return super().__getattribute__(name)
         except AttributeError:
             if name.startswith("_"):
                 raise
-            if name in super().__getattribute__("modified_attributes"):
-                return super().__getattribute__("modified_attributes")[name]
-            if name in super().__getattribute__("attributes"):
-                return super().__getattribute__("attributes")[name]
+            if name in self._modified_attributes:
+                return self._modified_attributes[name]
+            if name in self._attributes:
+                return self._attributes[name]
+
+    def __setattr__(self, obj, val):
+        if obj.startswith("_"):
+            super().__setattr__(obj, val)
+            return
+        self._modified_attributes[obj] = val
