@@ -2,7 +2,7 @@ import unittest
 
 from MIWOS.libs.exceptions.unsupported_data_type_exception import UnsupportedDataTypeException
 from MIWOS.migration import Migration
-from tests import helper
+import helper
 
 
 class TestMigrationClass(Migration):
