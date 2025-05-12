@@ -53,7 +53,18 @@ class Model:
         return models
 
     @classmethod
-    def create(cls, **kwargs):
+    def create(cls, _many=None, **kwargs):
+        if isinstance(_many, list):
+            _query = (database_select())(cls().table_name)
+            _query.insert_many(_many)
+            result = _query.commit()
+            models = []
+            for data in result:
+                model = cls(**data)
+                model._need_creation = False
+                models.append(model)
+            return models
+
         model = cls(**kwargs)
         model.save()
         return model

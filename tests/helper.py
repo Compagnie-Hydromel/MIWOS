@@ -3,6 +3,8 @@ from MIWOS.config import init as init_MIWOS
 from os import getenv
 from dotenv import load_dotenv
 
+load_dotenv()
+
 init_MIWOS(
     db_connector=getenv("DB_CONNECTOR") or "mysql",
     db_host=getenv("DB_HOST") or "localhost",
@@ -20,26 +22,26 @@ class Car(Model):
 
 
 def init():
-    load_dotenv()
-
     from MIWOS import db
     db.migrate()
 
-    Car.create(
-        id=1,
-        name="Test Car",
-        year=2023,
-    )
-    Car.create(
-        id=2,
-        name="Test Car",
-        year=2023,
-    )
-    Car.create(
-        id=3,
-        name="Test Car666",
-        year=2024,
-    )
+    Car.create([
+        {
+            "id": 1,
+            "name": "Test Car",
+            "year": 2023,
+        },
+        {
+            "id": 2,
+            "name": "Test Car",
+            "year": 2023,
+        },
+        {
+            "id": 3,
+            "name": "Test Car666",
+            "year": 2024,
+        },
+    ])
 
 
 def destroy():

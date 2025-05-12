@@ -1,5 +1,4 @@
 from MIWOS.libs.exceptions.unsupported_database_connector_exception import UnsupportedDatabaseConnectorException
-from MIWOS.libs.sql.querycolumn.column import Column
 
 
 def database_select() -> type:
