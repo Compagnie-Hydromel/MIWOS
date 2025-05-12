@@ -17,6 +17,12 @@ class TestModel(unittest.TestCase):
     def test_get_table_name(self):
         self.assertEqual(self.model.table_name, "cars")
 
+    def test_set_attributes(self):
+        self.model.name = "Test Car333"
+        self.model.year = 202333
+        self.assertEqual(self.model.name, "Test Car333")
+        self.assertEqual(self.model.year, 202333)
+
     def test_save(self):
         new_model = helper.Car(name="Test Car777", year=2027)
         self.assertEqual(new_model.id, None)
@@ -26,6 +32,18 @@ class TestModel(unittest.TestCase):
         self.assertEqual(new_model.id, 4)
         self.assertEqual(new_model.name, "Test Car777")
         self.assertEqual(new_model.year, 2027)
+
+    def test_save_update(self):
+        new_model = helper.Car.find(3)
+        self.assertEqual(new_model.id, 3)
+        self.assertEqual(new_model.name, "Test Car666")
+        self.assertEqual(new_model.year, 2024)
+        new_model.name = "Test Car999"
+        new_model.year = 2025
+        new_model.save()
+        self.assertEqual(new_model.id, 3)
+        self.assertEqual(new_model.name, "Test Car999")
+        self.assertEqual(new_model.year, 2025)
 
     def test_delete(self):
         new_model = helper.Car(name="Test Car", year=2023)
