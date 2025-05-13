@@ -80,6 +80,40 @@ class TestModel(unittest.TestCase):
         self.assertEqual(car.name, "Test Car")
         self.assertEqual(car.year, 2023)
 
+    def test_has_many(self):
+        car = helper.Car.find(1)
+        helper.Human.create([
+            {
+                "name": "Test Human 1",
+                "is_human": True,
+                "height": 184,
+                "age": 50,
+                "is_alive": False,
+                "birth_date": "1990-01-01",
+                "created_at": "2023-01-01 00:00:00",
+                "updated_at": "2023-01-01 00:00:00",
+                "car": car,
+            },
+            {
+                "name": "Test Human 2",
+                "is_human": True,
+                "height": 180,
+                "age": 30,
+                "is_alive": False,
+                "birth_date": "1990-01-01",
+                "created_at": "2023-01-01 00:00:00",
+                "updated_at": "2023-01-01 00:00:00",
+                "car": car,
+            }])
+
+        humans = car.humans
+        self.assertEqual(len(humans), 2)
+        self.assertIsInstance(humans[0], helper.Human)
+        self.assertEqual(humans[0].name, "Test Human 1")
+        self.assertEqual(humans[1].name, "Test Human 2")
+        self.assertIsInstance(humans[1], helper.Human)
+        self.assertEqual(humans[1].name, "Test Human 2")
+
     def test_where(self):
         models = helper.Car.where(name="Test Car")
         self.assertEqual(len(models), 2)

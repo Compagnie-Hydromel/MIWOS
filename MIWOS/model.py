@@ -1,11 +1,12 @@
 from MIWOS.libs.exceptions.locked_model_exception import LockedModelException
-from MIWOS.libs.word_formatter import pluralize
+from MIWOS.libs.word_formatter import pluralize, singularize
 from MIWOS.libs.sql.select import database_select
 
 
 class Model:
     _primary_key = "id"
     _belongs_to = []
+    _has_many = []
 
     def __init__(self, **kwargs):
         self._query = (database_select())(self.table_name)
@@ -57,11 +58,22 @@ class Model:
     def create(cls, _many=None, **kwargs):
         if isinstance(_many, list):
             _query = (database_select())(cls().table_name)
-            _query.insert_many(_many)
+            processed_many = []
+            for item in _many:
+                processed_item = item.copy()
+                for key, value in list(processed_item.items()):
+                    if isinstance(value, Model):
+                        processed_item[key + "_" +
+                                       value._primary_key] = value._attributes[value._primary_key]
+                        del processed_item[key]
+                processed_many.append(processed_item)
+
+            _query.insert_many(processed_many)
             result = _query.commit()
             models = []
             for data in result:
-                model = cls(**data)
+                model = cls()
+                model._attributes = data
                 model._need_creation = False
                 models.append(model)
             return models
@@ -116,6 +128,9 @@ class Model:
                 return self._attributes[name]
             if name in self._belongs_to:
                 return self.__parse_belongs_to(name)
+            if name in self._has_many:
+                return self.__parse_has_many(singularize(name))
+            return None
 
     def __setattr__(self, obj, val):
         if obj.startswith("_"):
@@ -127,3 +142,8 @@ class Model:
         model = Model.__subclasses__(
         )[[cls.__name__.lower() for cls in Model.__subclasses__()].index(name)]
         return model.find(self._attributes[f"{name}_{model._primary_key}"])
+
+    def __parse_has_many(self, name):
+        model = Model.__subclasses__(
+        )[[cls.__name__.lower() for cls in Model.__subclasses__()].index(name)]
+        return model.where(**{f"{self.__class__.__name__.lower()}_{self._primary_key}": self._attributes[self._primary_key]})
