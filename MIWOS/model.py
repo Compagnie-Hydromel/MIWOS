@@ -57,30 +57,33 @@ class Model:
     @classmethod
     def create(cls, _many=None, **kwargs):
         if isinstance(_many, list):
-            _query = (database_select())(cls().table_name)
-            processed_many = []
-            for item in _many:
-                processed_item = item.copy()
-                for key, value in list(processed_item.items()):
-                    if isinstance(value, Model):
-                        processed_item[key + "_" +
-                                       value._primary_key] = value._attributes[value._primary_key]
-                        del processed_item[key]
-                processed_many.append(processed_item)
-
-            _query.insert_many(processed_many)
-            result = _query.commit()
-            models = []
-            for data in result:
-                model = cls()
-                model._attributes = data
-                model._need_creation = False
-                models.append(model)
-            return models
-
+            return cls.create_many(_many)
         model = cls(**kwargs)
         model.save()
         return model
+
+    @classmethod
+    def create_many(cls, many):
+        _query = (database_select())(cls().table_name)
+        processed_many = []
+        for item in many:
+            processed_item = item.copy()
+            for key, value in list(processed_item.items()):
+                if isinstance(value, Model):
+                    processed_item[key + "_" +
+                                   value._primary_key] = value._attributes[value._primary_key]
+                    del processed_item[key]
+            processed_many.append(processed_item)
+
+        _query.insert_many(processed_many)
+        result = _query.commit()
+        models = []
+        for data in result:
+            model = cls()
+            model._attributes = data
+            model._need_creation = False
+            models.append(model)
+        return models
 
     @property
     def table_name(self):
