@@ -1,6 +1,3 @@
-from MIWOS.libs.sql.querycolumn.column import Column
-
-
 class MySQLQueryGenerator:
     def __init__(self, table_name):
         self.table_name = table_name
@@ -11,8 +8,30 @@ class MySQLQueryGenerator:
         return f"{self.base_query} {self.where_clause} {self.limit_clause} {self.returning}"
 
     def create(self, columns: list):
-        columns_str = ", ".join(str(column) for column in columns)
+        columns_str = ""
+
+        for column in columns:
+            columns_str += f" {str(column)},"
+            constraint = column.constraint(self.table_name)
+            if constraint:
+                columns_str += f"CONSTRAINT {constraint},"
+
+        columns_str = columns_str[:-1]
+
         self.base_query = f"CREATE TABLE {self.table_name} ({columns_str})"
+
+    def add_columns(self, columns: list):
+        columns_str = ""
+
+        for column in columns:
+            columns_str += f"ADD COLUMN {str(column)},"
+            constraint = column.constraint(self.table_name)
+            if constraint:
+                columns_str += f"ADD CONSTRAINT {constraint},"
+
+        columns_str = columns_str[:-1]
+
+        self.base_query = f"ALTER TABLE {self.table_name}  {columns_str}"
 
     def is_exists(self):
         self.base_query = f"SELECT 1 FROM information_schema.tables"
@@ -23,21 +42,22 @@ class MySQLQueryGenerator:
 
     def insert(self, **kwargs):
         columns = ", ".join(kwargs.keys())
-        values = ", ".join(f"'{value}'" for value in kwargs.values())
+        values = ", ".join(self.__type_to_sqltype(value)
+                           for value in kwargs.values())
         self.base_query = f"INSERT INTO {self.table_name} ({columns}) VALUES ({values})" if kwargs else ""
         self.returning = f"RETURNING *" if kwargs else ""
 
     def insert_many(self, many):
         columns = ", ".join(many[0].keys())
         values_list = ", ".join(
-            f"({', '.join(f'\'{value}\'' for value in record.values())})" for record in many
+            f"({', '.join(self.__type_to_sqltype(value) for value in record.values())})" for record in many
         )
         self.base_query = f"INSERT INTO {self.table_name} ({columns}) VALUES {values_list}"
         self.returning = f"RETURNING *"
 
     def update(self, **kwargs):
         set_clause = ", ".join(
-            f"{key}='{value}'" for key, value in kwargs.items())
+            f"{key}={self.__type_to_sqltype(value)}" for key, value in kwargs.items())
         self.base_query = f"UPDATE {self.table_name} SET {set_clause}" if kwargs else ""
 
     def select(self, *args):
@@ -49,7 +69,7 @@ class MySQLQueryGenerator:
 
     def where(self, **kwargs):
         where_clause = " AND ".join(
-            f"{key}='{value}'" for key, value in kwargs.items())
+            f"{key}={self.__type_to_sqltype(value)}" for key, value in kwargs.items())
         self.where_clause = f"WHERE {where_clause}" if where_clause else ""
 
     def limit(self, limit):
@@ -60,3 +80,8 @@ class MySQLQueryGenerator:
         self.where_clause = ""
         self.limit_clause = ""
         self.returning = ""
+
+    def __type_to_sqltype(self, value):
+        if isinstance(value, bool):
+            return "'1'" if value else "'0'"
+        return f"'{value}'"

@@ -13,6 +13,7 @@ class SecondSampleData(Migration):
             x.date("birth_date")
             x.datetime("created_at")
             x.datetime("updated_at")
+            x.references("car")
 
         self.create_tables("humans", sample_table_column)
 

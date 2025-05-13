@@ -61,6 +61,25 @@ class TestModel(unittest.TestCase):
         self.assertIsInstance(model, helper.Car)
         self.assertEqual(model.year, 2023)
 
+    def test_belongs_to(self):
+        human = helper.Human.create(
+            name="Test Human",
+            is_human=True,
+            height=180,
+            age=30,
+            is_alive=False,
+            birth_date="1990-01-01",
+            created_at="2023-01-01 00:00:00",
+            updated_at="2023-01-01 00:00:00",
+            car=helper.Car.find(1),
+        )
+
+        self.assertIsInstance(human.car, helper.Car)
+        car = human.car
+        self.assertEqual(car.id, 1)
+        self.assertEqual(car.name, "Test Car")
+        self.assertEqual(car.year, 2023)
+
     def test_where(self):
         models = helper.Car.where(name="Test Car")
         self.assertEqual(len(models), 2)

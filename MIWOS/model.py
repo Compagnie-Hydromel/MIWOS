@@ -5,6 +5,7 @@ from MIWOS.libs.sql.select import database_select
 
 class Model:
     _primary_key = "id"
+    _belongs_to = []
 
     def __init__(self, **kwargs):
         self._query = (database_select())(self.table_name)
@@ -79,6 +80,11 @@ class Model:
         if self._locked:
             raise LockedModelException(
                 self.table_name + " is _locked. Cannot save.")
+        for key, value in list(self._modified_attributes.items()):
+            if isinstance(value, Model):
+                self._modified_attributes[key + "_" +
+                                          value._primary_key] = value._attributes[value._primary_key]
+                del self._modified_attributes[key]
         if self._need_creation:
             self._query.insert(**self._modified_attributes)
             self._attributes = self._query.commit()
@@ -108,9 +114,16 @@ class Model:
                 return self._modified_attributes[name]
             if name in self._attributes:
                 return self._attributes[name]
+            if name in self._belongs_to:
+                return self.__parse_belongs_to(name)
 
     def __setattr__(self, obj, val):
         if obj.startswith("_"):
             super().__setattr__(obj, val)
             return
         self._modified_attributes[obj] = val
+
+    def __parse_belongs_to(self, name):
+        model = Model.__subclasses__(
+        )[[cls.__name__.lower() for cls in Model.__subclasses__()].index(name)]
+        return model.find(self._attributes[f"{name}_{model._primary_key}"])

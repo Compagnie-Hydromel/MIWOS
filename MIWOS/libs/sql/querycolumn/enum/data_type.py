@@ -2,9 +2,11 @@ from enum import Enum
 
 
 class DataType(Enum):
-    INT = 0
-    FLOAT = 1
-    STRING = 2
-    BOOLEAN = 3
-    DATE = 4
-    DATETIME = 5
+    PRIMARY_KEY = 0
+    INT = 1
+    FLOAT = 2
+    STRING = 3
+    BOOLEAN = 4
+    DATE = 5
+    DATETIME = 6
+    REFERENCES = 7

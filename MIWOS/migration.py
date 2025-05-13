@@ -18,6 +18,14 @@ class Migration:
         query.create(columns.columns)
         query.commit()
 
+    def add_columns(self, table_name, columns_function):
+        query = (database_select())(table_name)
+        columns = Migration.ColumnsManager()
+        columns_function(columns)
+
+        query.add_columns(columns.columns)
+        query.commit()
+
     def drop_tables(self, table_name):
         query = (database_select())(table_name)
         query.drop()

@@ -18,7 +18,11 @@ init_MIWOS(
 
 
 class Car(Model):
-    pass
+    _has_many = ["humans"]
+
+
+class Human(Model):
+    _belongs_to = ["car"]
 
 
 def init():
