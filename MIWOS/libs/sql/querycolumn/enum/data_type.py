@@ -10,3 +10,4 @@ class DataType(Enum):
     DATE = 5
     DATETIME = 6
     REFERENCES = 7
+    TIMESTAMP = 8
