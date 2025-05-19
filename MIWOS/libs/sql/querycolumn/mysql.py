@@ -40,6 +40,8 @@ class MySQLColumn(Column):
             column_definition += " UNIQUE"
         if self.auto_increment:
             column_definition += " AUTO_INCREMENT"
+        if self.on_update:
+            column_definition += f" ON UPDATE {self.on_update}"
 
         return column_definition
 
@@ -49,7 +51,5 @@ class MySQLColumn(Column):
             constraint += f"fk_{table_name}_{self.foreign_key} FOREIGN KEY ({self.foreign_key}) REFERENCES {self.foreign_key_table}({self.foreign_key_column})"
             if self.on_delete:
                 constraint += f" ON DELETE {self.on_delete}"
-            if self.on_update:
-                constraint += f" ON UPDATE {self.on_update}"
 
         return constraint

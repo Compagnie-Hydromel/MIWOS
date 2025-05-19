@@ -43,6 +43,20 @@ class Model:
         return models
 
     @classmethod
+    def whereFirst(cls, **kwargs):
+        model = cls()
+        _query = (database_select())(cls().table_name)
+        _query.select("*")
+        _query.where(**kwargs)
+        _query.limit(1)
+        result = _query.execute()
+        if not result:
+            return None
+        model._attributes = result
+        model._need_creation = False
+        return model
+
+    @classmethod
     def all(cls):
         models = []
         _query = (database_select())(cls().table_name)
@@ -57,33 +71,20 @@ class Model:
     @classmethod
     def create(cls, _many=None, **kwargs):
         if isinstance(_many, list):
-            return cls.create_many(_many)
+            models = []
+            for item in cls.createMany(_many):
+                models.append(item)
+            return models
         model = cls(**kwargs)
         model.save()
         return model
 
     @classmethod
-    def create_many(cls, many):
-        _query = (database_select())(cls().table_name)
-        processed_many = []
+    def createMany(cls, many):
         for item in many:
-            processed_item = item.copy()
-            for key, value in list(processed_item.items()):
-                if isinstance(value, Model):
-                    processed_item[key + "_" +
-                                   value._primary_key] = value._attributes[value._primary_key]
-                    del processed_item[key]
-            processed_many.append(processed_item)
-
-        _query.insert_many(processed_many)
-        result = _query.commit()
-        models = []
-        for data in result:
-            model = cls()
-            model._attributes = data
-            model._need_creation = False
-            models.append(model)
-        return models
+            model = cls(**item)
+            model.save()
+            yield model
 
     @property
     def table_name(self):
@@ -100,6 +101,7 @@ class Model:
                 self._modified_attributes[key + "_" +
                                           value._primary_key] = value._attributes[value._primary_key]
                 del self._modified_attributes[key]
+        self.beforeSave()
         if self._need_creation:
             self._query.insert(**self._modified_attributes)
             self._attributes = self._query.commit()
@@ -111,6 +113,7 @@ class Model:
             self._attributes.update(self._modified_attributes)
         self._modified_attributes = {}
         self._need_creation = False
+        self.afterSave()
 
     def delete(self):
         self._query.delete()
@@ -118,6 +121,39 @@ class Model:
             **{self._primary_key: self._attributes[self._primary_key]})
         self._query.commit()
         self._locked = True
+
+    def isDirty(self, name):
+        if name in self._modified_attributes:
+            return True
+        return False
+
+    def beforeSave(self):
+        """
+        This method is called before saving the model.
+        You can override this method in your model class to perform any actions before saving.
+        """
+        pass
+
+    def afterSave(self):
+        """
+        This method is called after saving the model.
+        You can override this method in your model class to perform any actions after saving.
+        """
+        pass
+
+    def beforeDelete(self):
+        """
+        This method is called before deleting the model.
+        You can override this method in your model class to perform any actions before deleting.
+        """
+        pass
+
+    def afterDelete(self):
+        """
+        This method is called after deleting the model.
+        You can override this method in your model class to perform any actions after deleting.
+        """
+        pass
 
     def __str__(self):
         return self.__class__.__name__ + "(" + str(self._attributes) + ")"
