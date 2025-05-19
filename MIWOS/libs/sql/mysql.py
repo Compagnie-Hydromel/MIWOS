@@ -8,12 +8,12 @@ class MysqlQuery(MySQLQueryGenerator):
         self._query = executor_select()
         self.initialized = True
 
-    def execute(self):
-        result = self._query.execute(self.query)
+    def execute(self, many=False):
+        result = self._query.execute(self.query, many=many)
         self.reset_query()
         return result
 
-    def commit(self):
-        result = self._query.commit(self.query)
+    def commit(self, many=False):
+        result = self._query.commit(self.query, many=many)
         self.reset_query()
         return result

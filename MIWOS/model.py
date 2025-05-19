@@ -35,7 +35,7 @@ class Model:
         _query = (database_select())(cls().table_name)
         _query.select("*")
         _query.where(**kwargs)
-        for data in _query.execute():
+        for data in _query.execute(many=True):
             model = cls()
             model._attributes = data
             model._need_creation = False
@@ -47,7 +47,7 @@ class Model:
         models = []
         _query = (database_select())(cls().table_name)
         _query.select("*")
-        for data in _query.execute():
+        for data in _query.execute(many=True):
             model = cls()
             model._attributes = data
             model._need_creation = False
@@ -119,6 +119,9 @@ class Model:
         self._query.commit()
         self._locked = True
 
+    def __str__(self):
+        return self.__class__.__name__ + "(" + str(self._attributes) + ")"
+
     def __getattr__(self, name):
         try:
             return super().__getattribute__(name)
@@ -143,8 +146,6 @@ class Model:
 
     def __parse_relation(self, name, relation_list, default_class_name_func, default_foreign_key_func, single=True):
         relation = next((x for x in relation_list if x.name == name), None)
-        if not relation:
-            return None
 
         class_name = relation.class_name or default_class_name_func(name)
         subclasses = {cls.__name__.lower(

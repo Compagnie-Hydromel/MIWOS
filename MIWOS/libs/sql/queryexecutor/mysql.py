@@ -22,18 +22,20 @@ class MySQLQueryExecutor:
             )
             self._initialized = True
 
-    def execute(self, query: str, parameters: list = []) -> list:
+    def execute(self, query: str, parameters: list = [], many=False) -> list:
         cursor = self.__db.cursor(dictionary=True)
         cursor.execute(query, parameters)
         result = cursor.fetchall()
         cursor.close()
-        if len(result) == 1:
+        if len(result) == 1 and not many:
             return result[0]
         elif len(result) == 0:
+            if many:
+                return []
             return None
         return result
 
-    def commit(self, query: str, parameters: list = []) -> None:
-        result = self.execute(query, parameters)
+    def commit(self, query: str, parameters: list = [], many=False) -> None:
+        result = self.execute(query, parameters, many)
         self.__db.commit()
         return result
