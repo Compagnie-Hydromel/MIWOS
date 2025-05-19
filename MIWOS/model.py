@@ -132,7 +132,7 @@ class Model:
             if name in self._belongs_to:
                 return self.__parse_belongs_to(name)
             if name in self._has_many:
-                return self.__parse_has_many(singularize(name))
+                return self.__parse_has_many(name)
             return None
 
     def __setattr__(self, obj, val):
@@ -142,11 +142,22 @@ class Model:
         self._modified_attributes[obj] = val
 
     def __parse_belongs_to(self, name):
-        model = Model.__subclasses__(
-        )[[cls.__name__.lower() for cls in Model.__subclasses__()].index(name)]
-        return model.find(self._attributes[f"{name}_{model._primary_key}"])
+        relation = next((x for x in self._belongs_to if x.name == name), None)
+
+        famous_model = Model.__subclasses__(
+        )[[cls.__name__.lower() for cls in Model.__subclasses__()].index(relation.class_name or name)]
+
+        foreign_key = relation.foreign_key or f"{famous_model.__name__.lower()}_{famous_model._primary_key}"
+        id = self._attributes[foreign_key]
+
+        return famous_model.find(id)
 
     def __parse_has_many(self, name):
-        model = Model.__subclasses__(
-        )[[cls.__name__.lower() for cls in Model.__subclasses__()].index(name)]
-        return model.where(**{f"{self.__class__.__name__.lower()}_{self._primary_key}": self._attributes[self._primary_key]})
+        relation = next((x for x in self._has_many if x.name == name), None)
+
+        famous_model = Model.__subclasses__(
+        )[[cls.__name__.lower() for cls in Model.__subclasses__()].index(relation.class_name or singularize(name))]
+
+        foreign_key = relation.foreign_key or f"{self.__class__.__name__.lower()}_{self._primary_key}"
+
+        return famous_model.where(**{(foreign_key): self._attributes[self._primary_key]})

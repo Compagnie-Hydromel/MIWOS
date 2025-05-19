@@ -1,3 +1,4 @@
+from MIWOS.libs.sql.association import BelongsTo, HasMany
 from MIWOS.model import Model
 from MIWOS.config import init as init_MIWOS
 from os import getenv
@@ -18,11 +19,11 @@ init_MIWOS(
 
 
 class Car(Model):
-    _has_many = ["humans"]
+    _has_many = [HasMany("humans")]
 
 
 class Human(Model):
-    _belongs_to = ["car"]
+    _belongs_to = [BelongsTo("car")]
 
 
 def init():
