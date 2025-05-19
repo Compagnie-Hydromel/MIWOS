@@ -141,23 +141,42 @@ class Model:
             return
         self._modified_attributes[obj] = val
 
+    def __parse_relation(self, name, relation_list, default_class_name_func, default_foreign_key_func, single=True):
+        relation = next((x for x in relation_list if x.name == name), None)
+        if not relation:
+            return None
+
+        class_name = relation.class_name or default_class_name_func(name)
+        subclasses = {cls.__name__.lower(
+        ): cls for cls in Model.__subclasses__()}
+        famous_model = subclasses.get(class_name.lower())
+        if not famous_model:
+            return None
+
+        foreign_key = relation.foreign_key or default_foreign_key_func(
+            famous_model)
+        if single:
+            id = self._attributes.get(foreign_key)
+            if id is None:
+                return None
+            return famous_model.find(id)
+        else:
+            return famous_model.where(**{foreign_key: self._attributes[self._primary_key]})
+
     def __parse_belongs_to(self, name):
-        relation = next((x for x in self._belongs_to if x.name == name), None)
-
-        famous_model = Model.__subclasses__(
-        )[[cls.__name__.lower() for cls in Model.__subclasses__()].index(relation.class_name or name)]
-
-        foreign_key = relation.foreign_key or f"{famous_model.__name__.lower()}_{famous_model._primary_key}"
-        id = self._attributes[foreign_key]
-
-        return famous_model.find(id)
+        return self.__parse_relation(
+            name,
+            self._belongs_to,
+            lambda n: n,
+            lambda famous_model: f"{famous_model.__name__.lower()}_{famous_model._primary_key}",
+            single=True
+        )
 
     def __parse_has_many(self, name):
-        relation = next((x for x in self._has_many if x.name == name), None)
-
-        famous_model = Model.__subclasses__(
-        )[[cls.__name__.lower() for cls in Model.__subclasses__()].index(relation.class_name or singularize(name))]
-
-        foreign_key = relation.foreign_key or f"{self.__class__.__name__.lower()}_{self._primary_key}"
-
-        return famous_model.where(**{(foreign_key): self._attributes[self._primary_key]})
+        return self.__parse_relation(
+            name,
+            self._has_many,
+            lambda n: singularize(n),
+            lambda _: f"{self.__class__.__name__.lower()}_{self._primary_key}",
+            single=False
+        )
