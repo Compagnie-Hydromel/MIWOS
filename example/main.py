@@ -58,7 +58,7 @@ def option():
             lastname = input("Enter lastname: ").strip()
             user = User.create(username=username, password=password,
                                email=email, firstname=firstname, lastname=lastname)
-            print(f"User {user.username} created successfully.")
+            print(f"User '{user}' created successfully.")
         case "2":
             author = user_by_username(
                 input("Enter the username of the author: ").strip())
@@ -74,7 +74,7 @@ def option():
             else:
                 print("List of users:")
                 for user in users:
-                    print(f"- {user.username} (ID: {user.id})")
+                    print(f"- {user}")
         case "4":
             messages = Message.where(user=user_by_username(
                 input("Enter the username of the user: ").strip()))

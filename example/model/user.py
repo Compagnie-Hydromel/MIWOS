@@ -5,6 +5,7 @@ import hashlib
 
 class User(Model):
     _has_many = [HasMany("messages")]
+    _hidden_attributes = ["password"]
 
     def beforeSave(self):
         if self.isDirty("password"):
