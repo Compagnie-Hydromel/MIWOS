@@ -7,6 +7,7 @@ class Model:
     _primary_key = "id"
     _belongs_to = []
     _has_many = []
+    _hidden_attributes = []
 
     def __init__(self, **kwargs):
         self._query = (database_select())(self.table_name)
@@ -166,8 +167,17 @@ class Model:
         """
         pass
 
+    def to_dict(self):
+        """
+        Convert the model instance to a dictionary representation.
+        """
+        return {key: value for key, value in self._attributes.items() if key not in self._hidden_attributes}
+
     def __str__(self):
-        return self.__class__.__name__ + "(" + str(self._attributes) + ")"
+        attribute = self._attributes
+
+        return self.__class__.__name__ + "(" + ", ".join(
+            [f"{key}={value}" for key, value in attribute.items() if key not in self._hidden_attributes]) + ")"
 
     def __getattr__(self, name):
         try:
