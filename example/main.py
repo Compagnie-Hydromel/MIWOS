@@ -1,3 +1,4 @@
+from db_management import loop as db_management
 from dotenv import load_dotenv
 from db.bootstrap import init
 from model.user import User
@@ -44,6 +45,7 @@ def option():
     print("2. Send a message")
     print("3. List all users")
     print("4. List all messages")
+    print("db. Database management")
     print("exit. Exit the application")
     choice = input("Enter your choice: ").strip()
 
@@ -83,6 +85,8 @@ def option():
                 for message in messages:
                     print(
                         f"- {message.user.username}: {message.content} (ID: {message.id})")
+        case "db":
+            db_management()
         case "exit":
             print("Exiting the application.")
             return False

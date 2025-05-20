@@ -1,9 +1,9 @@
-from MIWOS.config import init as init_MIWOS
+from MIWOS.config import DBConfig
 from os import getenv
 
 
 def init():
-    init_MIWOS(
+    DBConfig.set(
         db_connector=getenv("DB_CONNECTOR") or "mysql",
         db_host=getenv("DB_HOST") or "localhost",
         db_port=getenv("DB_PORT") or "3306",
