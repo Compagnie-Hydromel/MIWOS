@@ -3,7 +3,7 @@ from MIWOS.migration import Migration
 
 class CreateUser(Migration):
     def migrate(self):
-        def user_column(x):
+        with self.create_tables("users") as x:
             x.primary_key("id", auto_increment=True)
             x.string("username", unique=True)
             x.string("password", null=False)
@@ -13,8 +13,6 @@ class CreateUser(Migration):
             x.datetime("created_at", default="CURRENT_TIMESTAMP")
             x.datetime("updated_at", default="CURRENT_TIMESTAMP",
                        on_update="CURRENT_TIMESTAMP")
-
-        self.create_tables("users", user_column)
 
     def rollback(self):
         self.drop_tables("users")
