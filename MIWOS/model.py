@@ -29,11 +29,23 @@ class Model:
         model._need_creation = False
         return model
 
+    @staticmethod
+    def replaceModelToForeignKey(**kwargs):
+        for key, value in list(kwargs.items()):
+            if isinstance(value, Model):
+                kwargs[key + "_" +
+                       value._primary_key] = value._attributes[value._primary_key]
+                del kwargs[key]
+        return kwargs
+
     @classmethod
     def where(cls, **kwargs):
+        kwargs = cls.replaceModelToForeignKey(**kwargs)
+
         models = []
         _query = (database_select())(cls().table_name)
         _query.select("*")
+
         _query.where(**kwargs)
         for data in _query.execute(many=True):
             model = cls()
@@ -44,6 +56,8 @@ class Model:
 
     @classmethod
     def whereFirst(cls, **kwargs):
+        kwargs = cls.replaceModelToForeignKey(**kwargs)
+
         model = cls()
         _query = (database_select())(cls().table_name)
         _query.select("*")
@@ -96,11 +110,8 @@ class Model:
         if self._locked:
             raise LockedModelException(
                 self.table_name + " is _locked. Cannot save.")
-        for key, value in list(self._modified_attributes.items()):
-            if isinstance(value, Model):
-                self._modified_attributes[key + "_" +
-                                          value._primary_key] = value._attributes[value._primary_key]
-                del self._modified_attributes[key]
+        self._modified_attributes = self.replaceModelToForeignKey(
+            **self._modified_attributes)
         self.beforeSave()
         if self._need_creation:
             self._query.insert(**self._modified_attributes)
