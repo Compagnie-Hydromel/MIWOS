@@ -1,6 +1,7 @@
 from MIWOS.libs.exceptions.unsupported_data_type_exception import UnsupportedDataTypeException
 from MIWOS.libs.sql.querycolumn.enum.data_type import DataType
 from MIWOS.libs.sql.select import database_select, columns_select
+from contextlib import contextmanager
 
 
 class Migration:
@@ -10,19 +11,19 @@ class Migration:
     def rollback(self):
         pass
 
-    def create_tables(self, table_name, columns_function):
+    @contextmanager
+    def create_tables(self, table_name):
         query = (database_select())(table_name)
         columns = Migration.ColumnsManager()
-        columns_function(columns)
-
+        yield columns
         query.create(columns.columns)
         query.commit()
 
-    def add_columns(self, table_name, columns_function):
+    @contextmanager
+    def add_columns(self, table_name):
         query = (database_select())(table_name)
         columns = Migration.ColumnsManager()
-        columns_function(columns)
-
+        yield columns
         query.add_columns(columns.columns)
         query.commit()
 
