@@ -1,10 +1,9 @@
 from MIWOS.libs.exceptions.unsupported_database_connector_exception import UnsupportedDatabaseConnectorException
+from MIWOS.config import DBConfig
 
 
 def database_select() -> type:
-    from MIWOS.config import db_connector
-
-    match(db_connector):
+    match(DBConfig.get("db_connector")):
         case "mysql":
             from MIWOS.libs.sql.mysql import MysqlQuery as Query
         case _:
@@ -14,11 +13,15 @@ def database_select() -> type:
 
 
 def executor_select():
-    from MIWOS.config import db_connector, db_host, db_port, db_user, db_password, db_database, db_collation
-
-    match(db_connector):
+    match(DBConfig.get("db_connector")):
         case "mysql":
             from MIWOS.libs.sql.queryexecutor.mysql import MySQLQueryExecutor
+            db_host = DBConfig.get("db_host")
+            db_port = DBConfig.get("db_port")
+            db_user = DBConfig.get("db_user")
+            db_password = DBConfig.get("db_password")
+            db_database = DBConfig.get("db_database")
+            db_collation = DBConfig.get("db_collation")
             return MySQLQueryExecutor(
                 db_host, db_port, db_user, db_password, db_database, db_collation)
         case _:
@@ -26,9 +29,7 @@ def executor_select():
 
 
 def columns_select() -> type:
-    from MIWOS.config import db_connector
-
-    match(db_connector):
+    match(DBConfig.get("db_connector")):
         case "mysql":
             from MIWOS.libs.sql.querycolumn.mysql import MySQLColumn
             return MySQLColumn

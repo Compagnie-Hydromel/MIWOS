@@ -1,4 +1,4 @@
-from MIWOS.config import db_migration_dir
+from MIWOS.config import DBConfig
 import os
 import re
 from MIWOS.libs.sql.select import database_select
@@ -26,13 +26,13 @@ class MigrationTable(Model):
 
 
 def migration_iteration(reverse=False):
-    for filename in sorted(os.listdir(db_migration_dir), reverse=reverse):
+    for filename in sorted(os.listdir(DBConfig.get("db_migration_dir")), reverse=reverse):
         regex = re.compile(r"^([0-9]{1,})_([a-z0-9_]{1,})\.py$")
 
         if not regex.match(filename):
             continue
 
-        import_string = db_migration_dir.replace(
+        import_string = DBConfig.get("db_migration_dir").replace(
             "/", ".") + "." + filename[:-3]
         migration_module = __import__(import_string, fromlist=[""])
 
