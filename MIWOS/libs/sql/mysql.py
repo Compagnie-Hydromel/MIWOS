@@ -9,11 +9,13 @@ class MysqlQuery(MySQLQueryGenerator):
         self.initialized = True
 
     def execute(self, many=False):
-        result = self._query.execute(self.query, many=many)
+        result = self._query.execute(
+            self.query, parameters=self.arguments, many=many)
         self.reset_query()
         return result
 
     def commit(self, many=False):
-        result = self._query.commit(self.query, many=many)
+        result = self._query.commit(
+            self.query, parameters=self.arguments, many=many)
         self.reset_query()
         return result

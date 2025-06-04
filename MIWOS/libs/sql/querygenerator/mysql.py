@@ -10,6 +10,10 @@ class MySQLQueryGenerator:
     def query(self):
         return f"{self.base_query} {self.where_clause} {self.limit_clause} {self.returning}"
 
+    @property
+    def arguments(self):
+        return self.arguments_insert + self.arguments_update + self.arguments_where
+
     def create(self, columns: list):
         columns_str = ""
 
@@ -59,15 +63,16 @@ class MySQLQueryGenerator:
 
     def insert(self, **kwargs):
         columns = ", ".join(kwargs.keys())
-        values = ", ".join(self.__type_to_sqltype(value)
-                           for value in kwargs.values())
-        self.base_query = f"INSERT INTO {self.table_name} ({columns}) VALUES ({values})" if kwargs else ""
+        placeholders = ", ".join("%s" for _ in kwargs.values())
+        self.base_query = f"INSERT INTO {self.table_name} ({columns}) VALUES ({placeholders})" if kwargs else ""
         self.returning = f"RETURNING *" if kwargs else ""
+        self.arguments_insert = list(kwargs.values())
 
     def update(self, **kwargs):
         set_clause = ", ".join(
-            f"{key}={self.__type_to_sqltype(value)}" for key, value in kwargs.items())
+            f"{key}=%s" for key in kwargs.keys())
         self.base_query = f"UPDATE {self.table_name} SET {set_clause}" if kwargs else ""
+        self.arguments_update = list(kwargs.values())
 
     def select(self, *args):
         columns = ", ".join(args) if args else "*"
@@ -78,8 +83,9 @@ class MySQLQueryGenerator:
 
     def where(self, **kwargs):
         where_clause = " AND ".join(
-            f"{key}={self.__type_to_sqltype(value)}" for key, value in kwargs.items())
+            f"{key}=%s" for key in kwargs.keys())
         self.where_clause = f"WHERE {where_clause}" if where_clause else ""
+        self.arguments_where = list(kwargs.values())
 
     def inner_join(self, table, on_condition):
         self.base_query += f" INNER JOIN {table} ON {on_condition}"
@@ -92,8 +98,6 @@ class MySQLQueryGenerator:
         self.where_clause = ""
         self.limit_clause = ""
         self.returning = ""
-
-    def __type_to_sqltype(self, value):
-        if isinstance(value, bool):
-            return "'1'" if value else "'0'"
-        return f"'{value}'"
+        self.arguments_update = []
+        self.arguments_insert = []
+        self.arguments_where = []
