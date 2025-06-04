@@ -28,3 +28,24 @@ class BelongsTo(Association):
 
 class HasMany(BelongsTo):
     pass
+
+
+class HasAndBelongsToMany(BelongsTo):
+    def __init__(self, name: str, **kwargs):
+        super().__init__(name, **kwargs)
+        self._join_table = kwargs.get("join_table", None)
+        self._current_foreign_key = kwargs.get(
+            "current_foreign_key", None)
+        self._verb = kwargs.get("verb", "has_and_belongs_to_many")
+
+    @property
+    def join_table(self):
+        return self._join_table
+
+    @property
+    def current_foreign_key(self):
+        return self._current_foreign_key
+
+    @property
+    def verb(self):
+        return self._verb

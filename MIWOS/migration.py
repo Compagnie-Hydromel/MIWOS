@@ -32,6 +32,44 @@ class Migration:
         query.drop()
         query.commit()
 
+    def create_join_table(self, left_table, right_table, **kwargs):
+        right_table_primary_key = kwargs.get(
+            "right_table_primary_key", "id")
+        left_table_primary_key = kwargs.get(
+            "left_table_primary_key", "id")
+
+        verb = kwargs.get("verb", "has_and_belongs_to_many")
+
+        can_have_duplicates = kwargs.get(
+            "can_have_duplicates", False)
+
+        sort_table_name = [left_table, right_table]
+        sort_table_name.sort()
+
+        table_name = kwargs.get(
+            "table_name", f"{sort_table_name[0]}_{verb}_{sort_table_name[1]}")
+
+        query = (database_select())(table_name)
+
+        query.create_join_table(
+            left_table, right_table,
+            left_table_primary_key=left_table_primary_key,
+            right_table_primary_key=right_table_primary_key,
+            can_have_duplicates=can_have_duplicates
+        )
+        query.commit()
+
+    def drop_join_table(self, left_table, right_table, **kwargs):
+        verb = kwargs.get("verb", "has_and_belongs_to_many")
+        sort_table_name = [left_table, right_table]
+        sort_table_name.sort()
+        table_name = kwargs.get(
+            "table_name", f"{sort_table_name[0]}_{verb}_{sort_table_name[1]}")
+
+        query = (database_select())(table_name)
+        query.drop()
+        query.commit()
+
     class ColumnsManager:
         def __init__(self):
             self.columns = []

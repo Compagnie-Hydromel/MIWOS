@@ -7,6 +7,7 @@ class Model:
     _primary_key = "id"
     _belongs_to = []
     _has_many = []
+    _has_and_belongs_to_many = []
     _hidden_attributes = []
 
     def __init__(self, **kwargs):
@@ -193,6 +194,8 @@ class Model:
                 return self.__parse_belongs_to(name)
             if name in self._has_many:
                 return self.__parse_has_many(name)
+            if name in self._has_and_belongs_to_many:
+                return self.__parse_has_and_belongs_to_many(name)
             return None
 
     def __setattr__(self, obj, val):
@@ -238,3 +241,47 @@ class Model:
             lambda _: f"{self.__class__.__name__.lower()}_{self._primary_key}",
             single=False
         )
+
+    def __parse_has_and_belongs_to_many(self, name):
+        relation = next(
+            (x for x in self._has_and_belongs_to_many if x.name == name), None)
+        if not relation:
+            return None
+
+        class_name = relation.class_name or singularize(name)
+        subclasses = {cls.__name__.lower(
+        ): cls for cls in Model.__subclasses__()}
+        famous_model = subclasses.get(class_name.lower())
+        if not famous_model:
+            return None
+
+        current_foreign_key = relation.current_foreign_key or f"{self.__class__.__name__.lower()}_{self._primary_key}"
+
+        foreign_key = relation.foreign_key or f"{famous_model.__name__.lower()}_{famous_model._primary_key}"
+
+        verb = relation.verb or "has_and_belongs_to_many"
+
+        sort_class_name = [pluralize(self.__class__.__name__.lower()), pluralize(
+            class_name.lower())]
+
+        sort_class_name.sort()
+
+        join_table = relation.join_table or f"{sort_class_name[0]}_{verb}_{sort_class_name[1]}"
+
+        query = (database_select())(pluralize(name))
+
+        query.select(name + ".*")
+        query.inner_join(
+            join_table, f"{join_table}.{foreign_key}={name}.{famous_model._primary_key}")
+        query.where(
+            **{current_foreign_key: self._attributes[self._primary_key]})
+
+        results = query.execute(many=True)
+        models = []
+        for data in results:
+            model = famous_model()
+            model._attributes = data
+            model._need_creation = False
+            models.append(model)
+
+        return models
