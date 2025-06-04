@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from db.bootstrap import init
 from model.user import User
 from model.message import Message
+from model.channel import Channel
 import traceback
 load_dotenv()
 init()
@@ -20,6 +21,20 @@ def user_by_username(username):
     if not user:
         raise ValueError(f"User with username '{username}' not found.")
     return user
+
+
+def channel_by_name(name):
+    """
+    Fetch a channel by name.
+
+    :param name: The name of the channel to fetch.
+    :return: The channel object if found, None otherwise.
+    """
+    channel = Channel.whereFirst(name=name)
+
+    if not channel:
+        raise ValueError(f"Channel with name '{name}' not found.")
+    return channel
 
 
 def loop():
@@ -42,9 +57,14 @@ def loop():
 def option():
     print("\nOptions:")
     print("1. Create a new user")
-    print("2. Send a message")
-    print("3. List all users")
-    print("4. List all messages")
+    print("2. create a channel")
+    print("3. Send a message")
+    print("4. List all users")
+    print("5. List all messages")
+    print("6. List all channels")
+    print("7. Show user channels")
+    print("8. Show channel users")
+
     print("db. Database management")
     print("exit. Exit the application")
     choice = input("Enter your choice: ").strip()
@@ -60,6 +80,11 @@ def option():
                                email=email, firstname=firstname, lastname=lastname)
             print(f"User '{user}' created successfully.")
         case "2":
+            channel_name = input("Enter channel name: ").strip()
+            channel = Channel.create(name=channel_name)
+            print(f"Channel '{channel.name}' created successfully.")
+
+        case "3":
             author = user_by_username(
                 input("Enter the username of the author: ").strip())
             content = input("Enter message content: ").strip()
@@ -67,7 +92,7 @@ def option():
                                      content=content)
             print(
                 f"Message from {message.user.username}: {message.content} sent successfully.")
-        case "3":
+        case "4":
             users = User.all()
             if not users:
                 print("No users found.")
@@ -75,9 +100,9 @@ def option():
                 print("List of users:")
                 for user in users:
                     print(f"- {user}")
-        case "4":
-            messages = Message.where(user=user_by_username(
-                input("Enter the username of the user: ").strip()))
+        case "5":
+            messages = user_by_username(
+                input("Enter the username of the user: ").strip()).messages
             if not messages:
                 print("No messages found.")
             else:
@@ -85,6 +110,32 @@ def option():
                 for message in messages:
                     print(
                         f"- {message.user.username}: {message.content} (ID: {message.id})")
+        case "6":
+            channels = Channel.all()
+            if not channels:
+                print("No channels found.")
+            else:
+                print("List of channels:")
+                for channel in channels:
+                    print(f"- {channel.name} (ID: {channel.id})")
+        case "7":
+            users = channel_by_name(
+                input("Enter the name of the channel: ").strip()).users
+            if not users:
+                print("No users found in this channel.")
+            else:
+                print("Users in this channel:")
+                for user in users:
+                    print(f"- {user})")
+        case "8":
+            channels = user_by_username(
+                input("Enter the username of the user: ").strip()).channels
+            if not channels:
+                print("No channels found in this user.")
+            else:
+                print("Channels of this users:")
+                for channel in channels:
+                    print(f"- {channel})")
         case "db":
             db_management()
         case "exit":

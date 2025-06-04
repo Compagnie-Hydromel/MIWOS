@@ -1,4 +1,4 @@
-from MIWOS.libs.sql.association import HasMany
+from MIWOS.libs.sql.association import HasAndBelongsToMany, HasMany
 from MIWOS.model import Model
 import hashlib
 
@@ -6,6 +6,7 @@ import hashlib
 class User(Model):
     _has_many = [HasMany("messages")]
     _hidden_attributes = ["password"]
+    _has_and_belongs_to_many = [HasAndBelongsToMany("channels")]
 
     def beforeSave(self):
         if self.isDirty("password"):
