@@ -64,6 +64,7 @@ def option():
     print("6. List all channels")
     print("7. Show user channels")
     print("8. Show channel users")
+    print("9. Check user password")
 
     print("db. Database management")
     print("exit. Exit the application")
@@ -76,8 +77,8 @@ def option():
             email = input("Enter email: ").strip()
             firstname = input("Enter firstname: ").strip()
             lastname = input("Enter lastname: ").strip()
-            user = User.create(username=username, password=password,
-                               email=email, firstname=firstname, lastname=lastname)
+            user = User.createOrFail(username=username, password=password,
+                                     email=email, firstname=firstname, lastname=lastname)
             print(f"User '{user}' created successfully.")
         case "2":
             channel_name = input("Enter channel name: ").strip()
@@ -136,6 +137,12 @@ def option():
                 print("Channels of this users:")
                 for channel in channels:
                     print(f"- {channel})")
+        case "9":
+            username = input("Enter the username of the user: ").strip()
+            user = user_by_username(username)
+            print(f"Password for user '{username}' is correct.") if user.checkPassword(
+                input("Enter the password to check: ").strip()) else print(
+                f"Password for user '{username}' is incorrect.")
         case "db":
             db_management()
         case "exit":

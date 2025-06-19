@@ -1,4 +1,5 @@
 from MIWOS.libs.exceptions.locked_model_exception import LockedModelException
+from MIWOS.libs.exceptions.validation_exception import ValidationException
 from MIWOS.libs.word_formatter import pluralize, singularize
 from MIWOS.libs.sql.select import database_select
 
@@ -9,6 +10,7 @@ class Model:
     _has_many = []
     _has_and_belongs_to_many = []
     _hidden_attributes = []
+    _validators = {}
 
     def __init__(self, **kwargs):
         self._query = (database_select())(self.table_name)
@@ -85,22 +87,40 @@ class Model:
         return models
 
     @classmethod
-    def create(cls, _many=None, **kwargs):
+    def createOrFail(cls, _many=None, **kwargs):
         if isinstance(_many, list):
             models = []
             for item in cls.createMany(_many):
                 models.append(item)
             return models
         model = cls(**kwargs)
-        model.save()
+        model.saveOrFail()
         return model
 
     @classmethod
-    def createMany(cls, many):
+    def create(cls, _many=None, **kwargs):
+        try:
+            return cls.createOrFail(_many, **kwargs)
+        except ValidationException:
+            return None
+        except LockedModelException:
+            return None
+
+    @classmethod
+    def createManyOrFail(cls, many):
         for item in many:
             model = cls(**item)
-            model.save()
+            model.saveOrFail()
             yield model
+
+    @classmethod
+    def createMany(cls, many):
+        try:
+            return list(cls.createManyOrFail(many))
+        except ValidationException:
+            return []
+        except LockedModelException:
+            return []
 
     @property
     def table_name(self):
@@ -108,10 +128,24 @@ class Model:
             self._table_name = pluralize(self.__class__.__name__.lower())
         return self._table_name
 
-    def save(self):
+    def validate(self):
+        for field, validator in self._validators.items():
+            value = self._modified_attributes.get(
+                field, self._attributes.get(field))
+            if not validator(value):
+                return False
+        return True
+
+    def validateOrFail(self):
+        if not self.validate():
+            raise ValidationException(
+                f"Validation failed for {self.__class__.__name__}")
+
+    def saveOrFail(self):
         if self._locked:
             raise LockedModelException(
                 self.table_name + " is _locked. Cannot save.")
+        self.validateOrFail()
         self._modified_attributes = self.replaceModelToForeignKey(
             **self._modified_attributes)
         self.beforeSave()
@@ -127,6 +161,16 @@ class Model:
         self._modified_attributes = {}
         self._need_creation = False
         self.afterSave()
+
+    def save(self):
+        try:
+            self.saveOrFail()
+        except ValidationException:
+            return False
+        except LockedModelException:
+            return False
+
+        return True
 
     def delete(self):
         self._query.delete()
