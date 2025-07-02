@@ -6,6 +6,8 @@ def database_select() -> type:
     match(DBConfig.get("db_connector")):
         case "mysql":
             from MIWOS.libs.sql.mysql import MysqlQuery as Query
+        case "sqlite":
+            from MIWOS.libs.sql.sqlite import SqliteQuery as Query
         case _:
             raise UnsupportedDatabaseConnectorException()
 
@@ -24,6 +26,10 @@ def executor_select():
             db_collation = DBConfig.get("db_collation")
             return MySQLQueryExecutor(
                 db_host, db_port, db_user, db_password, db_database, db_collation)
+        case "sqlite":
+            from MIWOS.libs.sql.queryexecutor.sqlite import SQLiteQueryExecutor
+            db_file = DBConfig.get("db_database")
+            return SQLiteQueryExecutor(db_file)
         case _:
             raise UnsupportedDatabaseConnectorException()
 
@@ -33,5 +39,8 @@ def columns_select() -> type:
         case "mysql":
             from MIWOS.libs.sql.querycolumn.mysql import MySQLColumn
             return MySQLColumn
+        case "sqlite":
+            from MIWOS.libs.sql.querycolumn.sqlite import SQLiteColumn
+            return SQLiteColumn
         case _:
             raise UnsupportedDatabaseConnectorException()

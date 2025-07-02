@@ -2,6 +2,8 @@ from MIWOS.libs.word_formatter import singularize
 
 
 class MySQLQueryGenerator:
+    _anti_sql_injection_char = "%s"
+
     def __init__(self, table_name):
         self.table_name = table_name
         self.reset_query()
@@ -19,6 +21,7 @@ class MySQLQueryGenerator:
 
         for column in columns:
             columns_str += f" {str(column)},"
+        for column in columns:
             constraint = column.constraint(self.table_name)
             if constraint:
                 columns_str += f"CONSTRAINT {constraint},"
@@ -63,14 +66,15 @@ class MySQLQueryGenerator:
 
     def insert(self, **kwargs):
         columns = ", ".join(kwargs.keys())
-        placeholders = ", ".join("%s" for _ in kwargs.values())
+        placeholders = ", ".join(
+            self._anti_sql_injection_char for _ in kwargs.values())
         self.base_query = f"INSERT INTO {self.table_name} ({columns}) VALUES ({placeholders})" if kwargs else ""
         self.returning = f"RETURNING *" if kwargs else ""
         self.arguments_insert = list(kwargs.values())
 
     def update(self, **kwargs):
         set_clause = ", ".join(
-            f"{key}=%s" for key in kwargs.keys())
+            f"{key}=" + self._anti_sql_injection_char for key in kwargs.keys())
         self.base_query = f"UPDATE {self.table_name} SET {set_clause}" if kwargs else ""
         self.arguments_update = list(kwargs.values())
 
@@ -83,7 +87,7 @@ class MySQLQueryGenerator:
 
     def where(self, **kwargs):
         where_clause = " AND ".join(
-            f"{key}=%s" for key in kwargs.keys())
+            f"{key}=" + self._anti_sql_injection_char for key in kwargs.keys())
         self.where_clause = f"WHERE {where_clause}" if where_clause else ""
         self.arguments_where = list(kwargs.values())
 

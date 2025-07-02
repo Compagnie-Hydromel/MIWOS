@@ -12,10 +12,8 @@ migrations_table_name = "migrations"
 
 class MigrationsTable(Migration):
     def migrate(self):
-        def migrations_column(x):
+        with self.create_tables(migrations_table_name) as x:
             x.int("id", primary_key=True)
-
-        self.create_tables(migrations_table_name, migrations_column)
 
     def rollback(self):
         self.drop_tables(migrations_table_name)

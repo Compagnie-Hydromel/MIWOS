@@ -1,36 +1,30 @@
-import mysql.connector
+import sqlite3
 from typing import Any, List, Optional, Union
 
 
-class MySQLQueryExecutor:
+class SQLiteQueryExecutor:
     __instance = None
-    __db: mysql.connector.MySQLConnection
+    __db: sqlite3.Connection
 
     def __new__(cls, *args, **kwargs):
         if cls.__instance is None:
-            cls.__instance = super(MySQLQueryExecutor, cls).__new__(cls)
+            cls.__instance = super(SQLiteQueryExecutor, cls).__new__(cls)
         return cls.__instance
 
-    def __init__(self, host: str, port: str, user: str, password: str, database: str, collation: str) -> None:
+    def __init__(self, db_path: str) -> None:
         if not hasattr(self, "_initialized"):
-            self.__db = mysql.connector.connect(
-                host=host,
-                port=port,
-                user=user,
-                password=password,
-                database=database,
-                collation=collation,
-            )
+            self.__db = sqlite3.connect(db_path)
+            self.__db.row_factory = sqlite3.Row
             self._initialized = True
 
     def execute(
         self, query: str, parameters: Union[List[Any], tuple] = [], many: bool = False
     ) -> Optional[Union[dict, List[dict]]]:
         cursor = self.__db.cursor()
-        cursor = self.__db.cursor(dictionary=True)
         cursor.execute(query, parameters)
-        result = cursor.fetchall()
+        rows = cursor.fetchall()
         cursor.close()
+        result = [dict(row) for row in rows]
         if len(result) == 1 and not many:
             return result[0]
         elif len(result) == 0:
