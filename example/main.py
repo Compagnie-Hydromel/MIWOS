@@ -65,6 +65,8 @@ def option():
     print("7. Show user channels")
     print("8. Show channel users")
     print("9. Check user password")
+    print("10. Remove channel from user")
+    print("11. Add channel to user")
 
     print("db. Database management")
     print("exit. Exit the application")
@@ -143,6 +145,35 @@ def option():
             print(f"Password for user '{username}' is correct.") if user.checkPassword(
                 input("Enter the password to check: ").strip()) else print(
                 f"Password for user '{username}' is incorrect.")
+        case "10":
+            user = user_by_username(
+                input("Enter the username of the user: ").strip())
+            channels = user.channels
+            if not channels:
+                print("No channels found in this user.")
+            else:
+                print("Channels of this users:")
+                for channel in channels:
+                    print(f"- {channel})")
+                channel_id = input(
+                    "Enter the ID of the channel to remove: ").strip()
+                channel = channels.find(int(channel_id))
+                if not channel:
+                    print(
+                        f"Channel with ID '{channel_id}' not found in user '{user.username}'.")
+                    return
+                channels.remove(channel)
+                print(
+                    f"Channel '{channel.name}' removed from user '{user.username}' successfully.")
+
+        case "11":
+            username = input("Enter the username of the user: ").strip()
+            user = user_by_username(username)
+            channel_name = input(
+                "Enter the name of the channel to add: ").strip()
+            channel = channel_by_name(channel_name)
+
+            user.channels.append(channel)
         case "db":
             db_management()
         case "exit":

@@ -2,6 +2,7 @@ from MIWOS.libs.exceptions.locked_model_exception import LockedModelException
 from MIWOS.libs.exceptions.validation_exception import ValidationException
 from MIWOS.libs.word_formatter import pluralize, singularize
 from MIWOS.libs.sql.select import database_select
+from MIWOS.relation import ManyToManyRelationCollection, RelationCollection
 
 
 class Model:
@@ -266,7 +267,7 @@ class Model:
                 return None
             return famous_model.find(id)
         else:
-            return famous_model.where(**{foreign_key: self._attributes[self._primary_key]})
+            return RelationCollection(famous_model.where(**{foreign_key: self._attributes[self._primary_key]}))
 
     def __parse_belongs_to(self, name):
         return self.__parse_relation(
@@ -328,4 +329,9 @@ class Model:
             model._need_creation = False
             models.append(model)
 
-        return models
+        return ManyToManyRelationCollection(models,
+                                            join_table,
+                                            famous_model,
+                                            foreign_key,
+                                            self._attributes[self._primary_key],
+                                            current_foreign_key)
