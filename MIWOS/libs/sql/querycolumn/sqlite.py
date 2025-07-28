@@ -7,7 +7,7 @@ class SQLiteColumn(Column):
     @property
     def __data_type_to_string(self):
         match self.data_type:
-            case DataType.INT | DataType.PRIMARY_KEY | DataType.REFERENCES | DataType.INTEGER:
+            case DataType.INT | DataType.PRIMARY_KEY | DataType.REFERENCES | DataType.INTEGER | DataType.BIGINT:
                 return "INTEGER"
             case DataType.FLOAT:
                 return "REAL"

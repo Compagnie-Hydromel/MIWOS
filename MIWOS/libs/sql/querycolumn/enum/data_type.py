@@ -12,3 +12,4 @@ class DataType(Enum):
     REFERENCES = 7
     TIMESTAMP = 8
     INTEGER = 9
+    BIGINT = 10

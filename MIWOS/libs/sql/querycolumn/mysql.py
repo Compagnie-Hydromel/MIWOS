@@ -21,6 +21,8 @@ class MySQLColumn(Column):
                 return "DATETIME"
             case DataType.TIMESTAMP:
                 return "TIMESTAMP"
+            case DataType.BIGINT:
+                return "BIGINT"
             case _:
                 raise UnsupportedDataTypeException(self.data_type)
 

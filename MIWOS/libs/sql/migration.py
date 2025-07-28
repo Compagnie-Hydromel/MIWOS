@@ -13,7 +13,7 @@ migrations_table_name = "migrations"
 class MigrationsTable(Migration):
     def migrate(self):
         with self.create_tables(migrations_table_name) as x:
-            x.int("id", primary_key=True)
+            x.bigint("id", primary_key=True)
 
     def rollback(self):
         self.drop_tables(migrations_table_name)
