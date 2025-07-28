@@ -27,10 +27,11 @@ class Migration:
         query.add_columns(columns.columns)
         query.commit()
 
-    def drop_tables(self, table_name):
-        query = (database_select())(table_name)
-        query.drop()
-        query.commit()
+    def drop_tables(self, *table_names):
+        for table_name in table_names:
+            query = (database_select())(table_name)
+            query.drop()
+            query.commit()
 
     def create_join_table(self, left_table, right_table, **kwargs):
         right_table_primary_key = kwargs.get(
