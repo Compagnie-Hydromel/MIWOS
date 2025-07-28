@@ -13,6 +13,8 @@ authors = [
 description = "This is an ORM (Object Relational Mapping) library for Python"
 requires-python = ">=3.13"
 
+dynamic = ["dependencies"]
+
 [tool.setuptools]
 packages = [
     "MIWOS"
