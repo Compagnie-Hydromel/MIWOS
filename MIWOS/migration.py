@@ -76,6 +76,10 @@ class Migration:
             self.columns = []
             self.column_type = columns_select()
 
+        def unique(self, *column):
+            self.columns.append(
+                self.column_type("", "", unique_attributes=column))
+
         def __getattr__(self, name):
             def add_column(column_name, **kwargs):
                 data_type = getattr(DataType, name.upper(), None)

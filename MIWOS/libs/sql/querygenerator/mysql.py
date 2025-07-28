@@ -20,7 +20,10 @@ class MySQLQueryGenerator:
         columns_str = ""
 
         for column in columns:
-            columns_str += f" {str(column)},"
+            str_column = str(column)
+            if str_column == "":
+                continue
+            columns_str += f" {str_column},"
         for column in columns:
             constraint = column.constraint(self.table_name)
             if constraint:

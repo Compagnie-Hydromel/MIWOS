@@ -7,7 +7,7 @@ class SQLiteColumn(Column):
     @property
     def __data_type_to_string(self):
         match self.data_type:
-            case DataType.INT | DataType.PRIMARY_KEY | DataType.REFERENCES:
+            case DataType.INT | DataType.PRIMARY_KEY | DataType.REFERENCES | DataType.INTEGER:
                 return "INTEGER"
             case DataType.FLOAT:
                 return "REAL"
@@ -25,6 +25,8 @@ class SQLiteColumn(Column):
     def __str__(self):
         if self.data_type == DataType.REFERENCES:
             column_definition = f"{self.foreign_key} {self.__data_type_to_string}"
+        elif len(self.unique_attributes) > 0:
+            return ""
         else:
             column_definition = f"{self.name} {self.__data_type_to_string}"
 
@@ -47,5 +49,7 @@ class SQLiteColumn(Column):
             constraint += f"fk_{table_name}_{self.foreign_key} FOREIGN KEY ({self.foreign_key}) REFERENCES {self.foreign_key_table}({self.foreign_key_column})"
             if self.on_delete:
                 constraint += f" ON DELETE {self.on_delete}"
+        elif self.unique_attributes:
+            constraint += f"uq_{table_name}_{'_'.join(self.unique_attributes)} UNIQUE ({', '.join(self.unique_attributes)})"
 
         return constraint

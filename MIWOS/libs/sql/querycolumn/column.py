@@ -18,3 +18,4 @@ class Column:
             'foreign_key', self.name + "_" + self.foreign_key_column)
         self.on_delete = kwargs.get('on_delete', None)
         self.on_update = kwargs.get('on_update', None)
+        self.unique_attributes = kwargs.get('unique_attributes', [])
