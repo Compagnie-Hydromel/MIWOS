@@ -33,7 +33,10 @@ class SQLiteColumn(Column):
         if not self.null:
             column_definition += " NOT NULL"
         if self.default is not None:
-            column_definition += f" DEFAULT {self.default}"
+            if isinstance(self.default, str):
+                column_definition += f" DEFAULT '{self.default}'"
+            else:
+                column_definition += f" DEFAULT {self.default}"
         if self.primary_key or self.data_type == DataType.PRIMARY_KEY:
             column_definition += " PRIMARY KEY"
         if self.unique:
