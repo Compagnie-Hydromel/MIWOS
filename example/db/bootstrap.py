@@ -12,4 +12,5 @@ def init():
         db_database=getenv("DB_DATABASE") or "",
         db_collation=getenv("DB_COLLATION") or "utf8mb4_general_ci",
         db_migration_dir="db/migrations",
+        sql_log_file="sql.log"
     )

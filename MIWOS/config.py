@@ -7,7 +7,8 @@ class DBConfig:
         "db_password": "",
         "db_database": "",
         "db_collation": "utf8mb4_general_ci",
-        "db_migration_dir": "migrations"
+        "db_migration_dir": "migrations",
+        "sql_log_file": ""
     }
 
     @classmethod

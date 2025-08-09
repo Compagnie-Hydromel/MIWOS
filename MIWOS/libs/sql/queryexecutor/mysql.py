@@ -1,5 +1,6 @@
 import mysql.connector
 from typing import Any, List, Optional, Union
+from MIWOS.config import DBConfig
 
 
 class MySQLQueryExecutor:
@@ -26,6 +27,11 @@ class MySQLQueryExecutor:
     def execute(
         self, query: str, parameters: Union[List[Any], tuple] = [], many: bool = False
     ) -> Optional[Union[dict, List[dict]]]:
+        if DBConfig.get("sql_log_file") != "":
+            with open(DBConfig.get("sql_log_file"), "a") as log_file:
+                log_file.write(
+                    f"Executing query: {query} with parameters: {parameters}\n")
+
         cursor = self.__db.cursor()
         cursor = self.__db.cursor(dictionary=True)
         cursor.execute(query, parameters)
