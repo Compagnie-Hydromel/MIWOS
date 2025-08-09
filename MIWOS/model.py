@@ -1,8 +1,9 @@
+from typing import Iterable
 from MIWOS.libs.exceptions.locked_model_exception import LockedModelException
 from MIWOS.libs.exceptions.validation_exception import ValidationException
 from MIWOS.libs.word_formatter import pluralize, singularize
 from MIWOS.libs.sql.select import database_select
-from MIWOS.relation import ManyToManyRelationCollection, RelationCollection
+from MIWOS.relation import Collection, ManyToManyRelationCollection, RelationCollection
 
 
 class Model:
@@ -19,6 +20,10 @@ class Model:
         self._attributes = {}
         self._locked = False
         self._need_creation = True
+
+    @staticmethod
+    def get_collection_type():
+        return Collection
 
     @classmethod
     def find(cls, id):
@@ -47,17 +52,18 @@ class Model:
     def where(cls, **kwargs):
         kwargs = cls.replaceModelToForeignKey(**kwargs)
 
-        models = []
         _query = (database_select())(cls().table_name)
         _query.select("*")
 
         _query.where(**kwargs)
-        for data in _query.execute(many=True):
-            model = cls()
-            model._attributes = data
-            model._need_creation = False
-            models.append(model)
-        return models
+        return (cls.get_collection_type())(_query, cls)
+
+    @classmethod
+    def orderBy(cls, *args):
+        _query = (database_select())(cls().table_name)
+        _query.select("*")
+        _query.order_by(*args)
+        return (cls.get_collection_type())(_query, cls)
 
     @classmethod
     def whereFirst(cls, **kwargs):
@@ -77,15 +83,9 @@ class Model:
 
     @classmethod
     def all(cls):
-        models = []
         _query = (database_select())(cls().table_name)
         _query.select("*")
-        for data in _query.execute(many=True):
-            model = cls()
-            model._attributes = data
-            model._need_creation = False
-            models.append(model)
-        return models
+        return (cls.get_collection_type())(_query, cls)
 
     @classmethod
     def createOrFail(cls, _many=None, **kwargs):
@@ -267,7 +267,13 @@ class Model:
                 return None
             return famous_model.find(id)
         else:
-            return RelationCollection(famous_model.where(**{foreign_key: self._attributes[self._primary_key]}))
+            self._query.select(name + ".*")
+            self._query.inner_join(
+                name, f"{self.table_name}.{self._primary_key}={name}.{famous_model._primary_key}")
+            self._query.where(
+                **{foreign_key: self._attributes[self._primary_key]}
+            )
+            return RelationCollection(self._query, famous_model)
 
     def __parse_belongs_to(self, name):
         return self.__parse_relation(
@@ -321,15 +327,7 @@ class Model:
         query.where(
             **{current_foreign_key: self._attributes[self._primary_key]})
 
-        results = query.execute(many=True)
-        models = []
-        for data in results:
-            model = famous_model()
-            model._attributes = data
-            model._need_creation = False
-            models.append(model)
-
-        return ManyToManyRelationCollection(models,
+        return ManyToManyRelationCollection(query,
                                             join_table,
                                             famous_model,
                                             foreign_key,

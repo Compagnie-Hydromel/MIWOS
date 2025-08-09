@@ -10,7 +10,7 @@ class MySQLQueryGenerator:
 
     @property
     def query(self):
-        return f"{self.base_query} {self.where_clause} {self.limit_clause} {self.returning}"
+        return f"{self.base_query} {self.where_clause} {self.order_by_clause} {self.limit_clause} {self.returning}"
 
     @property
     def arguments(self):
@@ -100,9 +100,14 @@ class MySQLQueryGenerator:
     def limit(self, limit):
         self.limit_clause = f"LIMIT {limit}"
 
+    def order_by(self, *args):
+        order_by_clause = ", ".join(args)
+        self.order_by_clause = f" ORDER BY {order_by_clause} " if order_by_clause else ""
+
     def reset_query(self):
         self.base_query = ""
         self.where_clause = ""
+        self.order_by_clause = ""
         self.limit_clause = ""
         self.returning = ""
         self.arguments_update = []
