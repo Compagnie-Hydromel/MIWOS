@@ -292,20 +292,19 @@ class Model:
         if not famous_model:
             return None
 
-        foreign_key = relation.foreign_key or default_foreign_key_func(
-            famous_model)
         if single:
+            foreign_key = relation.foreign_key or default_foreign_key_func(
+                famous_model)
             id = self._attributes.get(foreign_key)
             if id is None:
                 return None
             return famous_model.find(id)
         else:
+            foreign_key = relation.foreign_key or default_foreign_key_func(
+                self.__class__)
             self._query.select(name + ".*")
             self._query.inner_join(
-                name, f"{self.table_name}.{self._primary_key}={name}.{famous_model._primary_key}")
-            self._query.where(
-                **{foreign_key: self._attributes[self._primary_key]}
-            )
+                name, f"{self.table_name}.{self._primary_key}={name}.{foreign_key}")
             return RelationCollection(self._query, famous_model)
 
     def __parse_belongs_to(self, name):
@@ -322,7 +321,7 @@ class Model:
             name,
             self._has_many,
             lambda n: singularize(n),
-            lambda _: f"{self.__class__.__name__.lower()}_{self._primary_key}",
+            lambda famous_model: f"{famous_model.__name__.lower()}_{famous_model._primary_key}",
             single=False
         )
 
