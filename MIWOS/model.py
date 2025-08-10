@@ -130,11 +130,16 @@ class Model:
         return self._table_name
 
     def validate(self):
+        self.beforeValidation()
         for field, validator in self._validators.items():
             value = self._modified_attributes.get(
                 field, self._attributes.get(field))
             if not validator(value):
+                self.afterValidationFailure()
+                self.afterValidation()
                 return False
+        self.afterValidationSuccess()
+        self.afterValidation()
         return True
 
     def validateOrFail(self):
@@ -210,6 +215,34 @@ class Model:
         """
         This method is called after deleting the model.
         You can override this method in your model class to perform any actions after deleting.
+        """
+        pass
+
+    def beforeValidation(self):
+        """
+        This method is called before validating the model.
+        You can override this method in your model class to perform any actions before validation.
+        """
+        pass
+
+    def afterValidation(self):
+        """
+        This method is called after validating the model.
+        You can override this method in your model class to perform any actions after validation.
+        """
+        pass
+
+    def afterValidationSuccess(self):
+        """
+        This method is called after a successful validation.
+        You can override this method in your model class to perform any actions after successful validation.
+        """
+        pass
+
+    def afterValidationFailure(self):
+        """
+        This method is called after a failed validation.
+        You can override this method in your model class to perform any actions after failed validation.
         """
         pass
 
