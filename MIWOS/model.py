@@ -40,6 +40,7 @@ class Model:
         if not result:
             return None
         model._attributes = result
+        model._modified_attributes = {}
         model._need_creation = False
         return model
 
@@ -74,7 +75,7 @@ class Model:
         kwargs = cls.replaceModelToForeignKey(**kwargs)
 
         model = cls()
-        _query = (database_select())(cls().table_name)
+        _query = (database_select())(model.table_name)
         _query.select("*")
         _query.where(**kwargs)
         _query.limit(1)
@@ -82,6 +83,7 @@ class Model:
         if not result:
             return None
         model._attributes = result
+        model._modified_attributes = {}
         model._need_creation = False
         return model
 
