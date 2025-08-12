@@ -38,6 +38,7 @@ class Collection(list):
         for data in self._query.execute(many=True):
             model = self._current_model()
             model._attributes = data
+            model._modified_attributes = {}
             model._need_creation = False
             super().append(model)
         self._fetched_data = True
