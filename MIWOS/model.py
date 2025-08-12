@@ -13,10 +13,14 @@ class Model:
     _has_and_belongs_to_many = []
     _hidden_attributes = []
     _validators = {}
+    _default_attributes = {}
 
     def __init__(self, **kwargs):
         self._query = (database_select())(self.table_name)
         self._modified_attributes = kwargs
+        for key, value in self._default_attributes.items():
+            if key not in self._modified_attributes:
+                self._modified_attributes[key] = value
         self._attributes = {}
         self._locked = False
         self._need_creation = True
