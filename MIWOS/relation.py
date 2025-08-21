@@ -15,6 +15,21 @@ class Collection(list):
             self._query.where(**kwargs)
         return self
 
+    def whereNull(self, *args):
+        if not self._fetched_data:
+            self._query.where_null(*args)
+        return self
+
+    def whereNotNull(self, *args):
+        if not self._fetched_data:
+            self._query.where_not_null(*args)
+        return self
+
+    def whereNot(self, **kwargs):
+        if not self._fetched_data:
+            self._query.where_not(**kwargs)
+        return self
+
     def orderBy(self, *args):
         if not self._fetched_data:
             self._query.order_by(*args)

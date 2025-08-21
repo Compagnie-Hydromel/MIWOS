@@ -64,6 +64,29 @@ class Model:
         return (cls.get_collection_type())(_query, cls)
 
     @classmethod
+    def whereNull(cls, *args):
+        _query = (database_select())(cls().table_name)
+        _query.select("*")
+        _query.where_null(*args)
+        return (cls.get_collection_type())(_query, cls)
+
+    @classmethod
+    def whereNotNull(cls, *args):
+        _query = (database_select())(cls().table_name)
+        _query.select("*")
+        _query.where_not_null(*args)
+        return (cls.get_collection_type())(_query, cls)
+
+    @classmethod
+    def whereNot(cls, **kwargs):
+        kwargs = cls.replaceModelToForeignKey(**kwargs)
+
+        _query = (database_select())(cls().table_name)
+        _query.select("*")
+        _query.where_not(**kwargs)
+        return (cls.get_collection_type())(_query, cls)
+
+    @classmethod
     def orderBy(cls, *args):
         _query = (database_select())(cls().table_name)
         _query.select("*")

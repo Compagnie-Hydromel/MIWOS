@@ -91,8 +91,22 @@ class MySQLQueryGenerator:
     def where(self, **kwargs):
         where_clause = " AND ".join(
             f"{key}=" + self._anti_sql_injection_char for key in kwargs.keys())
-        self.where_clause = f"WHERE {where_clause}" if where_clause else ""
-        self.arguments_where = list(kwargs.values())
+        self.where_clause += f" AND {where_clause}" if self.where_clause else f"WHERE {where_clause}"
+        self.arguments_where += list(kwargs.values())
+
+    def where_null(self, *args):
+        where_clause = " AND ".join(f"{arg} IS NULL" for arg in args)
+        self.where_clause += f" AND {where_clause}" if self.where_clause else f"WHERE {where_clause}"
+
+    def where_not_null(self, *args):
+        where_clause = " AND ".join(f"{arg} IS NOT NULL" for arg in args)
+        self.where_clause += f" AND {where_clause}" if self.where_clause else f"WHERE {where_clause}"
+
+    def where_not(self, **kwargs):
+        where_clause = " AND ".join(
+            f"{key}<>" + self._anti_sql_injection_char for key in kwargs.keys())
+        self.where_clause += f" AND {where_clause}" if self.where_clause else f"WHERE {where_clause}"
+        self.arguments_where += list(kwargs.values())
 
     def inner_join(self, table, on_condition):
         self.base_query += f" INNER JOIN {table} ON {on_condition}"
