@@ -37,11 +37,11 @@ class MySQLQueryGenerator:
         left_table_s = singularize(left_table)
         right_table_s = singularize(right_table)
 
-        primary_key = "id INT PRIMARY KEY AUTO_INCREMENT" if can_have_duplicates else f"PRIMARY KEY ({left_table_s}_{left_table_primary_key}, {right_table_s}_{right_table_primary_key})"
+        primary_key = f"id INTEGER PRIMARY KEY AUTO_INCREMENT" if can_have_duplicates else f"PRIMARY KEY ({left_table_s}_{left_table_primary_key}, {right_table_s}_{right_table_primary_key})"
 
         self.base_query = f"CREATE TABLE {self.table_name} (" \
-            f"{left_table_s}_{left_table_primary_key} INT NOT NULL, " \
-            f"{right_table_s}_{right_table_primary_key} INT NOT NULL, " \
+            f"{left_table_s}_{left_table_primary_key} INTEGER NOT NULL, " \
+            f"{right_table_s}_{right_table_primary_key} INTEGER NOT NULL, " \
             f"{primary_key}, " \
             f"FOREIGN KEY ({left_table_s}_{left_table_primary_key}) REFERENCES {left_table}({left_table_primary_key}) ON DELETE CASCADE, " \
             f"FOREIGN KEY ({right_table_s}_{right_table_primary_key}) REFERENCES {right_table}({right_table_primary_key}) ON DELETE CASCADE" \
