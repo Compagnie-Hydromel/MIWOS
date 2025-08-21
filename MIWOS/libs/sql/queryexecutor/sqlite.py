@@ -1,7 +1,7 @@
 import sqlite3
 from typing import Any, List, Optional, Union
 
-from build.lib.MIWOS.config import DBConfig
+from MIWOS.config import DBConfig
 
 
 class SQLiteQueryExecutor:
