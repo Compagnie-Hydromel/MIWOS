@@ -1,4 +1,6 @@
+from MIWOS.libs.sql.querycolumn.enum.data_type import DataType
 from MIWOS.libs.word_formatter import singularize
+from MIWOS.libs.sql.select import columns_select
 
 
 class MySQLQueryGenerator:
@@ -37,14 +39,32 @@ class MySQLQueryGenerator:
         left_table_s = singularize(left_table)
         right_table_s = singularize(right_table)
 
-        primary_key = f"id INTEGER PRIMARY KEY AUTO_INCREMENT" if can_have_duplicates else f"PRIMARY KEY ({left_table_s}_{left_table_primary_key}, {right_table_s}_{right_table_primary_key})"
+        columns_type = columns_select()
+
+        primary_key = columns_type(
+            "id", DataType.PRIMARY_KEY, auto_increment=True) if can_have_duplicates else f"PRIMARY KEY ({left_table_s}_{left_table_primary_key}, {right_table_s}_{right_table_primary_key})"
+
+        foreign_key_1 = columns_type(
+            f"{left_table_s}",
+            DataType.REFERENCES,
+            foreign_key_table=left_table,
+            foreign_key_column=left_table_primary_key,
+            on_delete="CASCADE",
+        )
+
+        foreign_key_2 = columns_type(
+            f"{right_table_s}",
+            DataType.REFERENCES,
+            foreign_key_table=right_table,
+            foreign_key_column=right_table_primary_key,
+            on_delete="CASCADE",
+        )
 
         self.base_query = f"CREATE TABLE {self.table_name} (" \
-            f"{left_table_s}_{left_table_primary_key} INTEGER NOT NULL, " \
-            f"{right_table_s}_{right_table_primary_key} INTEGER NOT NULL, " \
+            f"{foreign_key_1}, {foreign_key_2}," \
             f"{primary_key}, " \
-            f"FOREIGN KEY ({left_table_s}_{left_table_primary_key}) REFERENCES {left_table}({left_table_primary_key}) ON DELETE CASCADE, " \
-            f"FOREIGN KEY ({right_table_s}_{right_table_primary_key}) REFERENCES {right_table}({right_table_primary_key}) ON DELETE CASCADE" \
+            f"CONSTRAINT {foreign_key_1.constraint(self.table_name)}," \
+            f"CONSTRAINT {foreign_key_2.constraint(self.table_name)}" \
             f")"
 
     def add_columns(self, columns: list):

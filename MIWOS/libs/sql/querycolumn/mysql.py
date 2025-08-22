@@ -37,7 +37,7 @@ class MySQLColumn(Column):
         if not self.null:
             column_definition += " NOT NULL"
         if self.default is not None:
-            if isinstance(self.default, str):
+            if isinstance(self.default, str) and not self.default == "CURRENT_TIMESTAMP":
                 column_definition += f" DEFAULT '{self.default}'"
             else:
                 column_definition += f" DEFAULT {self.default}"
