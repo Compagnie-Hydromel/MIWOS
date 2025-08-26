@@ -1,6 +1,6 @@
 class DBConfig:
     _config = {
-        "db_connector": "mysql",
+        "db_connector": "mariadb",
         "db_host": "localhost",
         "db_port": 3306,
         "db_user": "",

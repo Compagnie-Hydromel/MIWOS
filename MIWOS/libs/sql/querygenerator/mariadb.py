@@ -3,7 +3,7 @@ from MIWOS.libs.word_formatter import singularize
 from MIWOS.libs.sql.select import columns_select
 
 
-class MySQLQueryGenerator:
+class MariaDBQueryGenerator:
     _anti_sql_injection_char = "%s"
 
     def __init__(self, table_name):

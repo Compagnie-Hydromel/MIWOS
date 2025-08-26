@@ -3,7 +3,7 @@ from MIWOS.libs.sql.querycolumn.enum.data_type import DataType
 from MIWOS.libs.exceptions.unsupported_data_type_exception import UnsupportedDataTypeException
 
 
-class MySQLColumn(Column):
+class MariaDBColumn(Column):
     @property
     def __data_type_to_string(self):
         match self.data_type:

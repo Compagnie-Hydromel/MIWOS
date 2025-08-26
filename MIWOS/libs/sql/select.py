@@ -4,8 +4,8 @@ from MIWOS.config import DBConfig
 
 def database_select() -> type:
     match(DBConfig.get("db_connector")):
-        case "mysql":
-            from MIWOS.libs.sql.mysql import MysqlQuery as Query
+        case "mariadb":
+            from MIWOS.libs.sql.mariadb import MariaDBQuery as Query
         case "sqlite":
             from MIWOS.libs.sql.sqlite import SqliteQuery as Query
         case _:
@@ -16,7 +16,7 @@ def database_select() -> type:
 
 def executor_select():
     match(DBConfig.get("db_connector")):
-        case "mysql":
+        case "mysql" | "mariadb":
             from MIWOS.libs.sql.queryexecutor.mysql import MySQLQueryExecutor
             db_host = DBConfig.get("db_host")
             db_port = DBConfig.get("db_port")
@@ -36,9 +36,9 @@ def executor_select():
 
 def columns_select() -> type:
     match(DBConfig.get("db_connector")):
-        case "mysql":
-            from MIWOS.libs.sql.querycolumn.mysql import MySQLColumn
-            return MySQLColumn
+        case "mariadb":
+            from MIWOS.libs.sql.querycolumn.mariadb import MariaDBColumn
+            return MariaDBColumn
         case "sqlite":
             from MIWOS.libs.sql.querycolumn.sqlite import SQLiteColumn
             return SQLiteColumn

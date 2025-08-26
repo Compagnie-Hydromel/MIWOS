@@ -1,8 +1,8 @@
 from MIWOS.libs.sql.select import executor_select
-from MIWOS.libs.sql.querygenerator.mysql import MySQLQueryGenerator
+from MIWOS.libs.sql.querygenerator.mariadb import MariaDBQueryGenerator
 
 
-class MysqlQuery(MySQLQueryGenerator):
+class MariaDBQuery(MariaDBQueryGenerator):
     def __init__(self, table_name):
         super().__init__(table_name=table_name)
         self._query = executor_select()

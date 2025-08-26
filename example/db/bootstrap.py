@@ -4,7 +4,7 @@ from os import getenv
 
 def init():
     DBConfig.set(
-        db_connector=getenv("DB_CONNECTOR") or "mysql",
+        db_connector=getenv("DB_CONNECTOR") or "mariadb",
         db_host=getenv("DB_HOST") or "localhost",
         db_port=getenv("DB_PORT") or "3306",
         db_user=getenv("DB_USER") or "",

@@ -1,7 +1,7 @@
-from MIWOS.libs.sql.querygenerator.mysql import MySQLQueryGenerator
+from MIWOS.libs.sql.querygenerator.mariadb import MariaDBQueryGenerator
 
 
-class SQLiteQueryGenerator(MySQLQueryGenerator):
+class SQLiteQueryGenerator(MariaDBQueryGenerator):
     _anti_sql_injection_char = "?"
 
     def is_exists(self):
