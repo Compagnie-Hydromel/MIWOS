@@ -18,6 +18,7 @@ class SQLiteQueryExecutor:
             self.__db = sqlite3.connect(db_path)
             self.__db.row_factory = sqlite3.Row
             self._initialized = True
+            self.__db.execute("PRAGMA foreign_keys = ON;")
 
     def execute(
         self, query: str, parameters: Union[List[Any], tuple] = [], many: bool = False
