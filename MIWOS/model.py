@@ -407,3 +407,10 @@ class Model:
                                             foreign_key,
                                             self._attributes[self._primary_key],
                                             current_foreign_key)
+
+    def __eq__(self, value):
+        if not isinstance(value, Model):
+            return False
+        if self.__class__ != value.__class__:
+            return False
+        return self._attributes.get(self._primary_key) == value._attributes.get(value._primary_key)
