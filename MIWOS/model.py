@@ -44,12 +44,25 @@ class Model:
         model._need_creation = False
         return model
 
-    @staticmethod
-    def replaceModelToForeignKey(**kwargs):
+    @classmethod
+    def replaceModelToForeignKey(cls, **kwargs):
         for key, value in list(kwargs.items()):
-            if isinstance(value, Model):
-                kwargs[key + "_" +
-                       value._primary_key] = value._attributes[value._primary_key]
+            if key in cls._belongs_to:
+                belongs_to_relation = cls._belongs_to[cls._belongs_to.index(
+                    key)]
+                famous_model = next(
+                    (x for x in Model.__subclasses__() if x.__name__.lower() == (belongs_to_relation.class_name or key).lower()), None)
+                if not famous_model:
+                    raise Exception(
+                        f"Model class '{belongs_to_relation.class_name or key}' not found for belongs_to relation '{key}' in model '{cls.__name__}'")
+
+                foreign_key = belongs_to_relation.foreign_key or f"{key}_{famous_model._primary_key}"
+
+                if not isinstance(value, Model):
+                    kwargs[foreign_key] = None
+                else:
+                    kwargs[foreign_key] = getattr(
+                        value, famous_model._primary_key)
                 del kwargs[key]
         return kwargs
 
