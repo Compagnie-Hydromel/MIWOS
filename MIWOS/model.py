@@ -353,6 +353,8 @@ class Model:
             self._query.select(name + ".*")
             self._query.inner_join(
                 name, f"{self.table_name}.{self._primary_key}={name}.{foreign_key}")
+            self._query.where(
+                **{f"{self.table_name}.{self._primary_key}": self._attributes[self._primary_key]})
             return RelationCollection(self._query, famous_model)
 
     def __parse_belongs_to(self, name):
