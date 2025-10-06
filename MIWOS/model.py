@@ -50,8 +50,16 @@ class Model:
             if key in cls._belongs_to:
                 belongs_to_relation = cls._belongs_to[cls._belongs_to.index(
                     key)]
-                famous_model = next(
-                    (x for x in Model.__subclasses__() if x.__name__.lower() == (belongs_to_relation.class_name or key).lower()), None)
+                subclasses = {}
+
+                def collect_subclasses(cls):
+                    for subclass in cls.__subclasses__():
+                        subclasses[subclass.__name__.lower()] = subclass
+                        collect_subclasses(subclass)
+
+                collect_subclasses(Model)
+                famous_model = subclasses.get(
+                    (belongs_to_relation.class_name or key).lower())
                 if not famous_model:
                     raise Exception(
                         f"Model class '{belongs_to_relation.class_name or key}' not found for belongs_to relation '{key}' in model '{cls.__name__}'")
