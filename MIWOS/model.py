@@ -328,8 +328,14 @@ class Model:
         relation = next((x for x in relation_list if x.name == name), None)
 
         class_name = relation.class_name or default_class_name_func(name)
-        subclasses = {cls.__name__.lower(
-        ): cls for cls in Model.__subclasses__()}
+        subclasses = {}
+
+        def collect_subclasses(cls):
+            for subclass in cls.__subclasses__():
+                subclasses[subclass.__name__.lower()] = subclass
+                collect_subclasses(subclass)
+
+        collect_subclasses(Model)
         famous_model = subclasses.get(class_name.lower())
         if not famous_model:
             return None
@@ -374,8 +380,14 @@ class Model:
             return None
 
         class_name = relation.class_name or singularize(name)
-        subclasses = {cls.__name__.lower(
-        ): cls for cls in Model.__subclasses__()}
+        subclasses = {}
+
+        def collect_subclasses(cls):
+            for subclass in cls.__subclasses__():
+                subclasses[subclass.__name__.lower()] = subclass
+                collect_subclasses(subclass)
+
+        collect_subclasses(Model)
         famous_model = subclasses.get(class_name.lower())
         if not famous_model:
             return None
