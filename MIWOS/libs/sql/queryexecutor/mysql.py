@@ -32,8 +32,12 @@ class MySQLQueryExecutor:
                 log_file.write(
                     f"Executing query: {query} with parameters: {parameters}\n")
 
-        cursor = self.__db.cursor()
-        cursor = self.__db.cursor(dictionary=True)
+        try:
+            cursor = self.__db.cursor(dictionary=True)
+        except mysql.connector.errors.OperationalError:
+            self.__db.reconnect()
+            cursor = self.__db.cursor(dictionary=True)
+
         cursor.execute(query, parameters)
         result = cursor.fetchall()
         cursor.close()
