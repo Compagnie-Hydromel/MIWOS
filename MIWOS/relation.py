@@ -58,6 +58,9 @@ class Collection(list):
             super().append(model)
         self._fetched_data = True
 
+    def to_dict(self):
+        return [item.to_dict() for item in self]
+
     @_ensure_fetched
     def append(self, object, /) -> None:
         super().append(object)
