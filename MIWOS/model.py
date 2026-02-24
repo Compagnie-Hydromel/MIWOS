@@ -1,5 +1,6 @@
 from typing import Iterable
 from MIWOS.libs.exceptions.locked_model_exception import LockedModelException
+from MIWOS.libs.exceptions.not_found_exception import NotFoundException
 from MIWOS.libs.exceptions.validation_exception import ValidationException
 from MIWOS.libs.word_formatter import pluralize, singularize
 from MIWOS.libs.sql.select import database_select
@@ -42,6 +43,13 @@ class Model:
         model._attributes = result
         model._modified_attributes = {}
         model._need_creation = False
+        return model
+
+    @classmethod
+    def findOrFail(cls, id):
+        model = cls.find(id)
+        if not model:
+            raise NotFoundException(f"{cls.__name__} with id {id} not found")
         return model
 
     @classmethod
