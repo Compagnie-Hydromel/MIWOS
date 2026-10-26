@@ -8,6 +8,7 @@ from MIWOS.relation import Collection, ManyToManyRelationCollection, RelationCol
 
 
 class Model:
+    _model_classes = {}
     _primary_key = "id"
     _belongs_to = []
     _has_many = []
@@ -15,6 +16,10 @@ class Model:
     _hidden_attributes = []
     _validators = {}
     _default_attributes = {}
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        Model._model_classes[cls.__name__.lower()] = cls
 
     def __init__(self, **kwargs):
         self._query = (database_select())(self.table_name)
@@ -25,6 +30,30 @@ class Model:
         self._attributes = {}
         self._locked = False
         self._need_creation = True
+        self._relations = {}
+
+    @classmethod
+    def _from_row(cls, data):
+        model = cls()
+        model._attributes = data
+        model._modified_attributes = {}
+        model._need_creation = False
+        return model
+
+    @classmethod
+    def _belongs_to_info(cls, name):
+        relation = next(
+            (item for item in cls._belongs_to if item.name == name), None)
+        if relation is None:
+            raise ValueError(
+                f"Unknown belongs_to relation '{name}' on {cls.__name__}")
+        related_model = Model._model_classes.get(
+            (relation.class_name or name).lower())
+        if related_model is None:
+            raise ValueError(
+                f"Model class '{relation.class_name or name}' is not loaded")
+        foreign_key = relation.foreign_key or f"{name}_{related_model._primary_key}"
+        return related_model, foreign_key
 
     @staticmethod
     def get_collection_type():
@@ -56,23 +85,7 @@ class Model:
     def replaceModelToForeignKey(cls, **kwargs):
         for key, value in list(kwargs.items()):
             if key in cls._belongs_to:
-                belongs_to_relation = cls._belongs_to[cls._belongs_to.index(
-                    key)]
-                subclasses = {}
-
-                def collect_subclasses(cls):
-                    for subclass in cls.__subclasses__():
-                        subclasses[subclass.__name__.lower()] = subclass
-                        collect_subclasses(subclass)
-
-                collect_subclasses(Model)
-                famous_model = subclasses.get(
-                    (belongs_to_relation.class_name or key).lower())
-                if not famous_model:
-                    raise Exception(
-                        f"Model class '{belongs_to_relation.class_name or key}' not found for belongs_to relation '{key}' in model '{cls.__name__}'")
-
-                foreign_key = belongs_to_relation.foreign_key or f"{key}_{famous_model._primary_key}"
+                famous_model, foreign_key = cls._belongs_to_info(key)
 
                 if not isinstance(value, Model):
                     kwargs[foreign_key] = None
@@ -98,6 +111,14 @@ class Model:
         _query.select("*")
         _query.where_null(*args)
         return (cls.get_collection_type())(_query, cls)
+
+    @classmethod
+    def whereIn(cls, **kwargs):
+        return cls.all().whereIn(**kwargs)
+
+    @classmethod
+    def withRelations(cls, *names):
+        return cls.all().withRelations(*names)
 
     @classmethod
     def whereNotNull(cls, *args):
@@ -217,11 +238,16 @@ class Model:
             self._query.insert(**self._modified_attributes)
             self._attributes = self._query.commit()
         else:
-            self._query.update(**self._modified_attributes)
-            self._query.where(
-                **{self._primary_key: self._attributes[self._primary_key]})
-            self._query.commit()
-            self._attributes.update(self._modified_attributes)
+            if self._modified_attributes:
+                self._query.update(**self._modified_attributes)
+                self._query.where(
+                    **{self._primary_key: self._attributes[self._primary_key]})
+                self._query.commit()
+                self._attributes.update(self._modified_attributes)
+        for name in tuple(self._relations):
+            _, foreign_key = self._belongs_to_info(name)
+            if foreign_key in self._modified_attributes:
+                self._relations.pop(name)
         self._modified_attributes = {}
         self._need_creation = False
         self.afterSave()
@@ -338,40 +364,44 @@ class Model:
         if obj.startswith("_"):
             super().__setattr__(obj, val)
             return
+        relations = self.__dict__.get("_relations", {})
+        for relation in self._belongs_to:
+            related_model = Model._model_classes.get(
+                (relation.class_name or relation.name).lower())
+            primary_key = related_model._primary_key if related_model else "id"
+            foreign_key = relation.foreign_key or f"{relation.name}_{primary_key}"
+            if obj in (relation.name, foreign_key):
+                relations.pop(relation.name, None)
+                if obj == foreign_key:
+                    self._modified_attributes.pop(relation.name, None)
+                else:
+                    self._modified_attributes.pop(foreign_key, None)
         self._modified_attributes[obj] = val
 
     def __parse_relation(self, name, relation_list, default_class_name_func, default_foreign_key_func, single=True):
         relation = next((x for x in relation_list if x.name == name), None)
 
         class_name = relation.class_name or default_class_name_func(name)
-        subclasses = {}
-
-        def collect_subclasses(cls):
-            for subclass in cls.__subclasses__():
-                subclasses[subclass.__name__.lower()] = subclass
-                collect_subclasses(subclass)
-
-        collect_subclasses(Model)
-        famous_model = subclasses.get(class_name.lower())
+        famous_model = Model._model_classes.get(class_name.lower())
         if not famous_model:
             return None
 
         if single:
-            foreign_key = relation.foreign_key or default_foreign_key_func(
-                famous_model)
-            id = self._attributes.get(foreign_key)
+            famous_model, foreign_key = self._belongs_to_info(name)
+            if name in self._relations:
+                return self._relations[name]
+            id = self._modified_attributes.get(
+                foreign_key, self._attributes.get(foreign_key))
             if id is None:
                 return None
             return famous_model.find(id)
         else:
             foreign_key = relation.foreign_key or default_foreign_key_func(
                 self.__class__)
-            self._query.select(name + ".*")
-            self._query.inner_join(
-                name, f"{self.table_name}.{self._primary_key}={name}.{foreign_key}")
-            self._query.where(
-                **{f"{self.table_name}.{self._primary_key}": self._attributes[self._primary_key]})
-            return RelationCollection(self._query, famous_model)
+            query = (database_select())(famous_model().table_name)
+            query.select("*")
+            query.where(**{foreign_key: getattr(self, self._primary_key)})
+            return RelationCollection(query, famous_model)
 
     def __parse_belongs_to(self, name):
         return self.__parse_relation(
@@ -398,15 +428,7 @@ class Model:
             return None
 
         class_name = relation.class_name or singularize(name)
-        subclasses = {}
-
-        def collect_subclasses(cls):
-            for subclass in cls.__subclasses__():
-                subclasses[subclass.__name__.lower()] = subclass
-                collect_subclasses(subclass)
-
-        collect_subclasses(Model)
-        famous_model = subclasses.get(class_name.lower())
+        famous_model = Model._model_classes.get(class_name.lower())
         if not famous_model:
             return None
 

@@ -109,24 +109,47 @@ class MariaDBQueryGenerator:
         self.base_query = f"DELETE FROM {self.table_name}"
 
     def where(self, **kwargs):
-        where_clause = " AND ".join(
-            f"{key}=" + self._anti_sql_injection_char for key in kwargs.keys())
-        self.where_clause += f" AND {where_clause}" if self.where_clause else f"WHERE {where_clause}"
-        self.arguments_where += list(kwargs.values())
+        for key, value in kwargs.items():
+            if value is None:
+                self.where_null(key)
+            else:
+                self._add_where(f"{key}={self._anti_sql_injection_char}")
+                self.arguments_where.append(value)
+
+    def _add_where(self, clause):
+        if clause:
+            self.where_clause += f" AND {clause}" if self.where_clause else f"WHERE {clause}"
+
+    def where_in(self, **kwargs):
+        for key, values in kwargs.items():
+            values = list(values)
+            non_null = [value for value in values if value is not None]
+            clauses = []
+            if non_null:
+                placeholders = ", ".join(
+                    self._anti_sql_injection_char for _ in non_null)
+                clauses.append(f"{key} IN ({placeholders})")
+                self.arguments_where.extend(non_null)
+            if None in values:
+                clauses.append(f"{key} IS NULL")
+            self._add_where(
+                "(" + " OR ".join(clauses) + ")" if clauses else "1=0")
 
     def where_null(self, *args):
         where_clause = " AND ".join(f"{arg} IS NULL" for arg in args)
-        self.where_clause += f" AND {where_clause}" if self.where_clause else f"WHERE {where_clause}"
+        self._add_where(where_clause)
 
     def where_not_null(self, *args):
         where_clause = " AND ".join(f"{arg} IS NOT NULL" for arg in args)
-        self.where_clause += f" AND {where_clause}" if self.where_clause else f"WHERE {where_clause}"
+        self._add_where(where_clause)
 
     def where_not(self, **kwargs):
-        where_clause = " AND ".join(
-            f"{key}<>" + self._anti_sql_injection_char for key in kwargs.keys())
-        self.where_clause += f" AND {where_clause}" if self.where_clause else f"WHERE {where_clause}"
-        self.arguments_where += list(kwargs.values())
+        for key, value in kwargs.items():
+            if value is None:
+                self.where_not_null(key)
+            else:
+                self._add_where(f"{key}<>{self._anti_sql_injection_char}")
+                self.arguments_where.append(value)
 
     def inner_join(self, table, on_condition):
         self.base_query += f" INNER JOIN {table} ON {on_condition}"

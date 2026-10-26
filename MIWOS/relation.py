@@ -9,11 +9,43 @@ class Collection(list):
         self._query = query
         self._current_model = current_model
         self._fetched_data = False
+        self._prefetch_relations = []
 
     def where(self, **kwargs):
         if not self._fetched_data:
-            self._query.where(**kwargs)
+            self._query.where(
+                **self._current_model.replaceModelToForeignKey(**kwargs))
         return self
+
+    def whereIn(self, **kwargs):
+        if not self._fetched_data:
+            self._query.where_in(**kwargs)
+        return self
+
+    def withRelations(self, *names):
+        for name in names:
+            self._current_model._belongs_to_info(name)
+            if name not in self._prefetch_relations:
+                self._prefetch_relations.append(name)
+        if self._fetched_data:
+            self._prefetch(names)
+        return self
+
+    def _prefetch(self, names):
+        for name in names:
+            related_model, foreign_key = self._current_model._belongs_to_info(
+                name)
+            ids = list(dict.fromkeys(
+                getattr(model, foreign_key) for model in list.__iter__(self)
+                if getattr(model, foreign_key) is not None))
+            related = {}
+            # Stay below SQLite's parameter limit, including older deployments.
+            for start in range(0, len(ids), 500):
+                for model in related_model.whereIn(**{related_model._primary_key: ids[start:start + 500]}):
+                    related[getattr(model, related_model._primary_key)] = model
+            for model in list.__iter__(self):
+                model._relations[name] = related.get(
+                    getattr(model, foreign_key))
 
     def whereNull(self, *args):
         if not self._fetched_data:
@@ -27,7 +59,8 @@ class Collection(list):
 
     def whereNot(self, **kwargs):
         if not self._fetched_data:
-            self._query.where_not(**kwargs)
+            self._query.where_not(
+                **self._current_model.replaceModelToForeignKey(**kwargs))
         return self
 
     def orderBy(self, *args):
@@ -51,11 +84,8 @@ class Collection(list):
         if self._fetched_data:
             return
         for data in self._query.execute(many=True):
-            model = self._current_model()
-            model._attributes = data
-            model._modified_attributes = {}
-            model._need_creation = False
-            super().append(model)
+            super().append(self._current_model._from_row(data))
+        self._prefetch(self._prefetch_relations)
         self._fetched_data = True
 
     def to_dict(self):
